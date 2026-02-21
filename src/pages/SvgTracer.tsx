@@ -1,44 +1,14 @@
 import {
-    Play, Pause, RotateCcw, Upload, Settings2,
-    Image as ImageIcon, MousePointerClick, ExternalLink, Wrench,
-    Video, Download, Square
+    Upload, Settings2,
+    Image as ImageIcon, MousePointerClick, Wrench
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { toCanvas } from 'html-to-image';
-
-interface TracerConfig {
-    duration: number;
-    stagger: number;
-    delay: number;
-    easing: string;
-    direction: string;
-    forceOutline: boolean;
-    useOriginalColor: boolean;
-    strokeColor: string;
-    strokeWidth: number;
-    showOverlay: boolean;
-    overlayOpacity: number;
-    isOverlayDraggable: boolean;
-    overlayScale: number;
-}
-
-// A default complex SVG to demonstrate the effect immediately
-const DEFAULT_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
-  <g stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M200 50 L350 150 L350 300 L200 350 L50 300 L50 150 Z" fill="#6366f1" />
-    <path d="M200 50 L200 200" stroke="#f43f5e" />
-    <path d="M50 150 L200 200" stroke="#f59e0b" />
-    <path d="M350 150 L200 200" stroke="#10b981" />
-    <path d="M200 200 L200 350" stroke="#3b82f6" />
-    <path d="M50 300 L200 200" stroke="#8b5cf6" />
-    <path d="M350 300 L200 200" stroke="#ec4899" />
-    <circle cx="200" cy="200" r="80" stroke="#64748b" />
-    <circle cx="200" cy="200" r="40" stroke="#94a3b8" />
-    <path d="M160 160 L240 240 M240 160 L160 240" stroke="#facc15" />
-  </g>
-</svg>
-`;
+import type { TracerConfig } from '../types';
+import { DEFAULT_SVG, easeFunctions } from '../utils/constants';
+import { NumberInput } from '../components/NumberInput';
+import { ToolkitLink } from '../components/ToolkitLink';
+import { PlaybackControls } from '../components/PlaybackControls';
 
 export default function SvgTracer() {
     const [svgContent, setSvgContent] = useState<string>(DEFAULT_SVG);
@@ -59,7 +29,7 @@ export default function SvgTracer() {
 
     // Configuration state
     const [config, setConfig] = useState<TracerConfig>({
-        duration: 2,
+        duration: 1.8,
         stagger: 2,
         delay: 1,
         easing: 'linear',
@@ -187,14 +157,7 @@ export default function SvgTracer() {
         handleConfigChange('overlayScale', 1);
     };
 
-    // Simple easing functions for manual recording
-    const easeFunctions: Record<string, (t: number) => number> = {
-        'linear': (t) => t,
-        'ease-in': (t) => t * t,
-        'ease-out': (t) => 1 - Math.pow(1 - t, 2),
-        'ease-in-out': (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
-        'ease': (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, // approximation
-    };
+
 
     const handleRecord = async () => {
         if (!previewAreaRef.current || isRecording) return;
@@ -451,8 +414,8 @@ export default function SvgTracer() {
                             <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
                             <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="Image VTracer" />
                             <ToolkitLink href="https://editor.graphite.art/" label="Graphite Editor" />
-                            {/* <ToolkitLink href="https://svgartista.net/" label="SVG Animator" /> */}
-                            {/* <ToolkitLink href="https://svglogos.dev/" label="Test SVGs" /> */}
+                            {/* <ToolkitLink href="https://svgartista.net/" label="Svg Artista" />
+                            <ToolkitLink href="https://svglogos.dev/" label="Svglogos.dev" /> */}
                         </div>
                     </div>
                 </div>
@@ -464,7 +427,7 @@ export default function SvgTracer() {
                         Animation
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-1">
                         <NumberInput label="Duration" value={config.duration} min={0.1} max={10} step={0.1} unit="s" onChange={(val) => handleConfigChange('duration', val)} />
                         <NumberInput label="Stagger Step" value={config.stagger} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('stagger', val)} />
                         <NumberInput label="Initial Delay" value={config.delay} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('delay', val)} />
@@ -474,10 +437,10 @@ export default function SvgTracer() {
                     < div className="grid grid-cols-2 gap-4" >
                         <div className="space-y-1.5" >
                             <label className="text-xs font-medium text-slate-500 uppercase tracking-wider" > Easing </label>
-                            < select
+                            <select
                                 value={config.easing}
                                 onChange={(e) => handleConfigChange('easing', e.target.value)}
-                                className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                             >
                                 <option value="linear" > Linear </option>
                                 < option value="ease" > Ease </option>
@@ -492,7 +455,7 @@ export default function SvgTracer() {
                             < select
                                 value={config.direction}
                                 onChange={(e) => handleConfigChange('direction', e.target.value)}
-                                className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                             >
                                 <option value="normal" > Normal </option>
                                 < option value="reverse" > Reverse </option>
@@ -600,33 +563,15 @@ export default function SvgTracer() {
             {/* Main Preview Area */}
             <main ref={previewAreaRef} className="flex-1 flex flex-col bg-slate-100 overflow-hidden relative" >
                 {/* Playback Controls Float */}
-                <div className="absolute top-6 right-6 z-20 flex items-center gap-3 bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-white/50" >
-                    <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 active:scale-[0.98] transition-all"
-                    >
-                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                        {isPlaying ? 'Pause' : 'Play'}
-                    </button>
-                    < button
-                        onClick={restartAnimation}
-                        className="flex items-center justify-center p-2 rounded-xl bg-slate-100/80 text-slate-600 hover:bg-white active:scale-[0.98] transition-all shadow-sm"
-                        title="Restart Animation"
-                    >
-                        <RotateCcw className="w-4 h-4" />
-                    </button>
-                    < button
-                        onClick={isRecording ? stopRecording : handleRecord}
-                        className={`flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-medium transition-all active:scale-[0.98] ${isRecording
-                            ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md'
-                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
-                            }`}
-                        title={isRecording ? "Stop Recording" : "Record as WebM"}
-                    >
-                        {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Video className="w-4 h-4" />}
-                        {isRecording ? `Stop (${Math.round(recordingProgress * 100)}%)` : 'Record'}
-                    </button>
-                </div>
+                <PlaybackControls
+                    isPlaying={isPlaying}
+                    setIsPlaying={setIsPlaying}
+                    isRecording={isRecording}
+                    recordingProgress={recordingProgress}
+                    restartAnimation={restartAnimation}
+                    handleRecord={handleRecord}
+                    stopRecording={stopRecording}
+                />
 
                 {/* Checkerboard background pattern for transparency visualization */}
                 < div
@@ -677,16 +622,14 @@ export default function SvgTracer() {
                             </div>
                         )}
 
-                        {/* We use dangerouslySetInnerHTML to inject the raw SVG.
-                The key prop forces React to completely destroy and recreate this DOM node 
-                when animationKey changes, ensuring CSS animations restart cleanly.
-             */}
                         < div
                             key={animationKey}
                             ref={svgContainerRef}
                             className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''} ${config.isOverlayDraggable ? 'pointer-events-none' : ''}`}
+                            // We use dangerouslySetInnerHTML to inject the raw SVG. The key prop forces React to completely destroy and recreate this DOM node when animationKey changes, ensuring CSS animations restart cleanly.
                             dangerouslySetInnerHTML={{ __html: svgContent }}
                         />
+
                     </div>
                 </div>
             </main>
@@ -694,46 +637,3 @@ export default function SvgTracer() {
     );
 }
 
-// Helper component for uniform number inputs
-interface NumberInputProps {
-    label: string;
-    value: number;
-    min?: number;
-    max?: number;
-    step?: number;
-    unit?: string;
-    onChange: (val: number) => void;
-}
-
-function NumberInput({ label, value, min, max, step, unit, onChange }: NumberInputProps) {
-    return (
-        <div className="flex justify-between items-center text-sm" >
-            <label className="text-slate-700" > {label} </label>
-            <div className="flex items-center gap-1">
-                <input
-                    type="number"
-                    min={min} max={max} step={step}
-                    value={value}
-                    onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-                    className="w-16 text-right text-xs p-1 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-1 focus:ring-indigo-500 font-mono text-slate-600"
-                />
-                {unit && <span className="text-xs text-slate-400 font-medium w-3">{unit}</span>}
-            </div>
-        </div>
-    );
-}
-
-// Helper component for Tookit links
-function ToolkitLink({ href, label }: { href: string; label: string }) {
-    return (
-        <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between group p-2 rounded-lg border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"
-        >
-            <span className="text-xs font-medium text-slate-600 group-hover:text-indigo-600 truncate">{label}</span>
-            <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-indigo-400 flex-shrink-0" />
-        </a>
-    );
-}
