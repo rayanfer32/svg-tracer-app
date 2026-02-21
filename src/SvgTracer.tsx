@@ -1,6 +1,6 @@
 import {
     Play, Pause, RotateCcw, Upload, Settings2,
-    Image as ImageIcon, MousePointerClick
+    Image as ImageIcon, MousePointerClick, ExternalLink, Wrench
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -14,6 +14,10 @@ interface TracerConfig {
     useOriginalColor: boolean;
     strokeColor: string;
     strokeWidth: number;
+    showOverlay: boolean;
+    overlayOpacity: number;
+    isOverlayDraggable: boolean;
+    overlayScale: number;
 }
 
 // A default complex SVG to demonstrate the effect immediately
@@ -36,6 +40,10 @@ const DEFAULT_SVG = `
 
 export default function SvgTracer() {
     const [svgContent, setSvgContent] = useState<string>(DEFAULT_SVG);
+    const [overlayImage, setOverlayImage] = useState<string | null>(null);
+    const [overlayPos, setOverlayPos] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [isPlaying, setIsPlaying] = useState<boolean>(true);
     const [animationKey, setAnimationKey] = useState<number>(0); // Used to force re-render and restart animation
     const svgContainerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +58,11 @@ export default function SvgTracer() {
         forceOutline: true,
         useOriginalColor: true,
         strokeColor: '#3b82f6', // blue-500
-        strokeWidth: 4
+        strokeWidth: 4,
+        showOverlay: true,
+        overlayOpacity: 0.3,
+        isOverlayDraggable: false,
+        overlayScale: 1
     });
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +82,20 @@ export default function SvgTracer() {
         }
     };
 
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target?.result;
+                if (typeof content === 'string') {
+                    setOverlayImage(content);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleConfigChange = <T extends keyof TracerConfig>(key: T, value: TracerConfig[T]) => {
         setConfig(prev => ({ ...prev, [key]: value }));
         // Auto-restart animation when config changes for better UX
@@ -80,6 +106,29 @@ export default function SvgTracer() {
     const restartAnimation = () => {
         setAnimationKey(prev => prev + 1);
         setIsPlaying(true);
+    };
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!config.isOverlayDraggable || !overlayImage) return;
+        setIsDragging(true);
+        setDragStart({ x: e.clientX - overlayPos.x, y: e.clientY - overlayPos.y });
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging) return;
+        setOverlayPos({
+            x: e.clientX - dragStart.x,
+            y: e.clientY - dragStart.y
+        });
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const resetOverlayPosition = () => {
+        setOverlayPos({ x: 0, y: 0 });
+        handleConfigChange('overlayScale', 1);
     };
 
     useEffect(() => {
@@ -181,6 +230,34 @@ export default function SvgTracer() {
                             onChange={handleFileUpload}
                         />
                     </label>
+
+                    < label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group" >
+                        <ImageIcon className="w-5 h-5 text-slate-400 group-hover:text-emerald-500" />
+                        <span className="text-sm font-medium text-slate-600 group-hover:text-emerald-600" >
+                            {overlayImage ? 'Change Reference Image' : 'Load Reference Image'}
+                        </span>
+                        < input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                        />
+                    </label>
+
+                    {/* Toolkit Section */}
+                    <div className="pt-2">
+                        <div className="flex items-center gap-2 text-slate-800 font-semibold mb-3 px-1" >
+                            <Wrench className="w-4 h-4 text-indigo-500" />
+                            Toolkit
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
+                            <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="Image VTracer" />
+                            <ToolkitLink href="https://editor.graphite.art/" label="Graphite Editor" />
+                            {/* <ToolkitLink href="https://svgartista.net/" label="SVG Animator" /> */}
+                            {/* <ToolkitLink href="https://svglogos.dev/" label="Test SVGs" /> */}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Playback Controls */}
@@ -317,6 +394,68 @@ export default function SvgTracer() {
                                     />
                                 </div>
                             )}
+
+                        < div className="pt-4 border-t border-slate-100 space-y-4" >
+                            <label className="flex items-center justify-between cursor-pointer" >
+                                <span className="text-sm font-medium text-slate-700" > Show Reference Image </span>
+                                < div className="relative" >
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={config.showOverlay}
+                                        onChange={(e) => handleConfigChange('showOverlay', e.target.checked)}
+                                    />
+                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.showOverlay ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                    < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.showOverlay ? 'transform translate-x-4' : ''}`}> </div>
+                                </div>
+                            </label>
+
+                            {
+                                config.showOverlay && (
+                                    <>
+                                        <ControlGroup label="Overlay Opacity" value={`${Math.round(config.overlayOpacity * 100)}%`}>
+                                            <input
+                                                type="range" min="0" max="1" step="0.01"
+                                                value={config.overlayOpacity}
+                                                onChange={(e) => handleConfigChange('overlayOpacity', parseFloat(e.target.value))}
+                                                className="w-full accent-indigo-600"
+                                            />
+                                        </ControlGroup>
+
+                                        <ControlGroup label="Overlay Scale" value={`${Math.round(config.overlayScale * 100)}%`}>
+                                            <input
+                                                type="range" min="0.1" max="3" step="0.05"
+                                                value={config.overlayScale}
+                                                onChange={(e) => handleConfigChange('overlayScale', parseFloat(e.target.value))}
+                                                className="w-full accent-emerald-600"
+                                            />
+                                        </ControlGroup>
+
+                                        <div className="space-y-3 pt-2">
+                                            <label className="flex items-center justify-between cursor-pointer" >
+                                                <span className="text-sm font-medium text-slate-700" > Drag to Position image </span>
+                                                < div className="relative" >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only"
+                                                        checked={config.isOverlayDraggable}
+                                                        onChange={(e) => handleConfigChange('isOverlayDraggable', e.target.checked)}
+                                                    />
+                                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                                    < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
+                                                </div>
+                                            </label>
+
+                                            <button
+                                                onClick={resetOverlayPosition}
+                                                className="w-full py-1.5 px-3 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
+                                            >
+                                                Reset Position
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -333,10 +472,33 @@ export default function SvgTracer() {
                     }}
                 />
 
-                < div className="flex-1 flex items-center justify-center p-8 relative z-10 overflow-auto" >
+                < div
+                    className="flex-1 flex items-center justify-center p-8 relative z-10 overflow-auto"
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                >
                     <div
-                        className="w-full max-w-2xl aspect-square flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 transition-all"
+                        className="w-full max-w-2xl aspect-square flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 transition-all relative"
                     >
+                        {/* Reference Image Overlay */}
+                        {overlayImage && config.showOverlay && (
+                            <div
+                                className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-300 ${config.isOverlayDraggable ? 'cursor-move pointer-events-auto z-20' : 'pointer-events-none z-0'}`}
+                                style={{
+                                    opacity: config.overlayOpacity,
+                                    transform: `translate(${overlayPos.x}px, ${overlayPos.y}px) scale(${config.overlayScale})`
+                                }}
+                                onMouseDown={handleMouseDown}
+                            >
+                                <img
+                                    src={overlayImage}
+                                    alt="Reference"
+                                    className="max-w-full max-h-full object-contain select-none"
+                                />
+                            </div>
+                        )}
+
                         {/* We use dangerouslySetInnerHTML to inject the raw SVG.
                 The key prop forces React to completely destroy and recreate this DOM node 
                 when animationKey changes, ensuring CSS animations restart cleanly.
@@ -344,7 +506,7 @@ export default function SvgTracer() {
                         < div
                             key={animationKey}
                             ref={svgContainerRef}
-                            className={`w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''}`}
+                            className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''}`}
                             dangerouslySetInnerHTML={{ __html: svgContent }}
                         />
                     </div>
@@ -382,5 +544,20 @@ function ControlGroup({ label, value, children }: ControlGroupProps) {
             </div>
             {children}
         </div>
+    );
+}
+
+// Helper component for Tookit links
+function ToolkitLink({ href, label }: { href: string; label: string }) {
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between group p-2 rounded-lg border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"
+        >
+            <span className="text-xs font-medium text-slate-600 group-hover:text-indigo-600 truncate">{label}</span>
+            <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-indigo-400 flex-shrink-0" />
+        </a>
     );
 }
