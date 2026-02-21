@@ -218,31 +218,33 @@ export default function SvgTracer() {
 
                 {/* Upload Section */}
                 <div className="space-y-3 border-b border-slate-100 pb-6" >
-                    <label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group" >
-                        <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
-                        <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
-                            Load Custom SVG
-                        </span>
-                        < input
-                            type="file"
-                            accept=".svg"
-                            className="hidden"
-                            onChange={handleFileUpload}
-                        />
-                    </label>
+                    <div className='flex gap-2'>
+                        <label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group" >
+                            <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
+                            <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
+                                Load SVG
+                            </span>
+                            < input
+                                type="file"
+                                accept=".svg"
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+                        </label>
 
-                    < label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group" >
-                        <ImageIcon className="w-5 h-5 text-slate-400 group-hover:text-emerald-500" />
-                        <span className="text-sm font-medium text-slate-600 group-hover:text-emerald-600" >
-                            {overlayImage ? 'Change Reference Image' : 'Load Reference Image'}
-                        </span>
-                        < input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                        />
-                    </label>
+                        < label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group" >
+                            <ImageIcon className="w-5 h-5 text-slate-400 group-hover:text-emerald-500" />
+                            <span className="text-sm font-medium text-slate-600 group-hover:text-emerald-600" >
+                                Ref Image
+                            </span>
+                            < input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageUpload}
+                            />
+                        </label>
+                    </div>
 
                     {/* Toolkit Section */}
                     <div className="pt-2">
@@ -250,7 +252,7 @@ export default function SvgTracer() {
                             <Wrench className="w-4 h-4 text-indigo-500" />
                             Toolkit
                         </div>
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-row flex-wrap gap-1.5">
                             <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
                             <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="Image VTracer" />
                             <ToolkitLink href="https://editor.graphite.art/" label="Graphite Editor" />
