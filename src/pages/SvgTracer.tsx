@@ -45,7 +45,9 @@ export default function SvgTracer() {
     const [overlayImage, setOverlayImage] = useState<string | null>(null);
     const [overlayPos, setOverlayPos] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
+    const [isResizing, setIsResizing] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, scale: 1 });
     const [isPlaying, setIsPlaying] = useState<boolean>(true);
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const isRecordingRef = useRef<boolean>(false);
@@ -103,6 +105,39 @@ export default function SvgTracer() {
         }
     };
 
+    const handleSvgDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type === 'image/svg+xml') {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const content = ev.target?.result;
+                if (typeof content === 'string') {
+                    setSvgContent(content);
+                    setAnimationKey(prev => prev + 1);
+                }
+            };
+            reader.readAsText(file);
+        } else {
+            alert("Please drop a valid SVG file.");
+        }
+    };
+
+    const handleImageDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const content = ev.target?.result;
+                if (typeof content === 'string') {
+                    setOverlayImage(content);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleConfigChange = <T extends keyof TracerConfig>(key: T, value: TracerConfig[T]) => {
         setConfig(prev => ({ ...prev, [key]: value }));
         // Auto-restart animation when config changes for better UX
@@ -121,16 +156,30 @@ export default function SvgTracer() {
         setDragStart({ x: e.clientX - overlayPos.x, y: e.clientY - overlayPos.y });
     };
 
+    const handleResizeMouseDown = (e: React.MouseEvent) => {
+        e.stopPropagation(); // prevent drag from starting
+        if (!config.isOverlayDraggable || !overlayImage) return;
+        setIsResizing(true);
+        setResizeStart({ x: e.clientX, y: e.clientY, scale: config.overlayScale });
+    };
+
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging) return;
-        setOverlayPos({
-            x: e.clientX - dragStart.x,
-            y: e.clientY - dragStart.y
-        });
+        if (isDragging) {
+            setOverlayPos({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y
+            });
+        } else if (isResizing) {
+            const dx = e.clientX - resizeStart.x;
+            // Scale dynamically (dx moves right to scale up, left to scale down)
+            const newScale = Math.max(0.1, resizeStart.scale + dx * 0.005);
+            handleConfigChange('overlayScale', newScale);
+        }
     };
 
     const handleMouseUp = () => {
         setIsDragging(false);
+        setIsResizing(false);
     };
 
     const resetOverlayPosition = () => {
@@ -346,19 +395,22 @@ export default function SvgTracer() {
       `} </style>
 
             {/* Sidebar Controls */}
-            <aside className="w-full md:w-80 bg-white border-r border-slate-200 p-6 flex flex-col gap-6 shadow-sm z-10 overflow-y-auto" >
+            <aside className="w-full md:w-72 bg-white border-r border-slate-200 p-4 flex flex-col gap-4 shadow-sm z-10 overflow-y-auto text-sm shrink-0" >
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2 text-indigo-600 mb-1" >
-                        <MousePointerClick className="w-6 h-6" />
+                    <h1 className="text-xl font-bold flex items-center gap-2 text-indigo-600" >
+                        <MousePointerClick className="w-5 h-5" />
                         SVG Tracer
                     </h1>
-                    < p className="text-sm text-slate-500" > Animate paths sequentially.</p>
                 </div>
 
                 {/* Upload Section */}
-                <div className="space-y-3 border-b border-slate-100 pb-6" >
-                    <div className='flex gap-2'>
-                        <label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group" >
+                <div className="space-y-2 border-b border-slate-100 pb-4" >
+                    <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
+                        <label
+                            className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group"
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={handleSvgDrop}
+                        >
                             <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
                             <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
                                 Load SVG
@@ -371,9 +423,13 @@ export default function SvgTracer() {
                             />
                         </label>
 
-                        < label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group" >
-                            <ImageIcon className="w-5 h-5 text-slate-400 group-hover:text-emerald-500" />
-                            <span className="text-sm font-medium text-slate-600 group-hover:text-emerald-600" >
+                        < label
+                            className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={handleImageDrop}
+                        >
+                            <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
+                            <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
                                 Ref Image
                             </span>
                             < input
@@ -401,77 +457,19 @@ export default function SvgTracer() {
                     </div>
                 </div>
 
-                {/* Playback Controls */}
-                <div className="flex items-center gap-3" >
-                    <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 active:scale-[0.98] transition-all"
-                    >
-                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                        {isPlaying ? 'Pause' : 'Play'}
-                    </button>
-                    < button
-                        onClick={restartAnimation}
-                        className="flex items-center justify-center p-2.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-[0.98] transition-all"
-                        title="Restart Animation"
-                    >
-                        <RotateCcw className="w-5 h-5" />
-                    </button>
-                    < button
-                        onClick={isRecording ? stopRecording : handleRecord}
-                        className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-all active:scale-[0.98] ${isRecording
-                            ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md'
-                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
-                            }`}
-                        title={isRecording ? "Stop Recording" : "Record as WebM"}
-                    >
-                        {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Video className="w-4 h-4" />}
-                        {isRecording ? `Stop (${Math.round(recordingProgress * 100)}%)` : 'Record'}
-                    </button>
-                </div>
-
                 {/* Configuration */}
-                <div className="space-y-5" >
-                    <div className="flex items-center gap-2 text-slate-800 font-semibold border-b border-slate-100 pb-2" >
+                <div className="space-y-3" >
+                    <div className="flex items-center gap-2 text-slate-800 font-semibold border-b border-slate-100 pb-1.5" >
                         <Settings2 className="w-4 h-4" />
-                        Animation Properties
+                        Animation
                     </div>
 
-                    < ControlGroup label="Duration (per path)" value={`${config.duration}s`}>
-                        <input
-                            type="range" min="0.1" max="10" step="0.1"
-                            value={config.duration}
-                            onChange={(e) => handleConfigChange('duration', parseFloat(e.target.value))}
-                            className="w-full accent-indigo-600"
-                        />
-                    </ControlGroup>
-
-                    < ControlGroup label="Stagger Step" value={`${config.stagger}s`}>
-                        <input
-                            type="range" min="0" max="5" step="0.1"
-                            value={config.stagger}
-                            onChange={(e) => handleConfigChange('stagger', parseFloat(e.target.value))}
-                            className="w-full accent-indigo-600"
-                        />
-                    </ControlGroup>
-
-                    < ControlGroup label="Initial Delay" value={`${config.delay}s`}>
-                        <input
-                            type="range" min="0" max="5" step="0.1"
-                            value={config.delay}
-                            onChange={(e) => handleConfigChange('delay', parseFloat(e.target.value))}
-                            className="w-full accent-indigo-600"
-                        />
-                    </ControlGroup>
-
-                    < ControlGroup label="Stroke Width" value={`${config.strokeWidth}px`}>
-                        <input
-                            type="range" min="0.1" max="20" step="0.1"
-                            value={config.strokeWidth}
-                            onChange={(e) => handleConfigChange('strokeWidth', parseFloat(e.target.value))}
-                            className="w-full accent-indigo-600"
-                        />
-                    </ControlGroup>
+                    <div className="space-y-2">
+                        <NumberInput label="Duration" value={config.duration} min={0.1} max={10} step={0.1} unit="s" onChange={(val) => handleConfigChange('duration', val)} />
+                        <NumberInput label="Stagger Step" value={config.stagger} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('stagger', val)} />
+                        <NumberInput label="Initial Delay" value={config.delay} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('delay', val)} />
+                        <NumberInput label="Stroke Width" value={config.strokeWidth} min={0.1} max={20} step={0.1} unit="px" onChange={(val) => handleConfigChange('strokeWidth', val)} />
+                    </div>
 
                     < div className="grid grid-cols-2 gap-4" >
                         <div className="space-y-1.5" >
@@ -504,7 +502,7 @@ export default function SvgTracer() {
                         </div>
                     </div>
 
-                    < div className="pt-4 border-t border-slate-100 space-y-4" >
+                    < div className="pt-2 border-t border-slate-100 space-y-2.5" >
                         <label className="flex items-center justify-between cursor-pointer" >
                             <span className="text-sm font-medium text-slate-700" > Force Outline Mode </span>
                             < div className="relative" >
@@ -547,7 +545,7 @@ export default function SvgTracer() {
                                 </div>
                             )}
 
-                        < div className="pt-4 border-t border-slate-100 space-y-4" >
+                        < div className="pt-2 border-t border-slate-100 space-y-2.5" >
                             <label className="flex items-center justify-between cursor-pointer" >
                                 <span className="text-sm font-medium text-slate-700" > Show Reference Image </span>
                                 < div className="relative" >
@@ -565,27 +563,14 @@ export default function SvgTracer() {
                             {
                                 config.showOverlay && (
                                     <>
-                                        <ControlGroup label="Overlay Opacity" value={`${Math.round(config.overlayOpacity * 100)}%`}>
-                                            <input
-                                                type="range" min="0" max="1" step="0.01"
-                                                value={config.overlayOpacity}
-                                                onChange={(e) => handleConfigChange('overlayOpacity', parseFloat(e.target.value))}
-                                                className="w-full accent-indigo-600"
-                                            />
-                                        </ControlGroup>
+                                        <div className="space-y-2">
+                                            <NumberInput label="Overlay Opacity" value={config.overlayOpacity} min={0} max={1} step={0.01} onChange={(val) => handleConfigChange('overlayOpacity', val)} />
+                                            <NumberInput label="Overlay Scale" value={config.overlayScale} min={0.1} max={3} step={0.05} onChange={(val) => handleConfigChange('overlayScale', val)} />
+                                        </div>
 
-                                        <ControlGroup label="Overlay Scale" value={`${Math.round(config.overlayScale * 100)}%`}>
-                                            <input
-                                                type="range" min="0.1" max="3" step="0.05"
-                                                value={config.overlayScale}
-                                                onChange={(e) => handleConfigChange('overlayScale', parseFloat(e.target.value))}
-                                                className="w-full accent-emerald-600"
-                                            />
-                                        </ControlGroup>
-
-                                        <div className="space-y-3 pt-2">
+                                        <div className="space-y-2 pt-1">
                                             <label className="flex items-center justify-between cursor-pointer" >
-                                                <span className="text-sm font-medium text-slate-700" > Drag to Position image </span>
+                                                <span className="text-sm font-medium text-slate-700" > Position & Resize Image </span>
                                                 < div className="relative" >
                                                     <input
                                                         type="checkbox"
@@ -614,6 +599,35 @@ export default function SvgTracer() {
 
             {/* Main Preview Area */}
             <main ref={previewAreaRef} className="flex-1 flex flex-col bg-slate-100 overflow-hidden relative" >
+                {/* Playback Controls Float */}
+                <div className="absolute top-6 right-6 z-20 flex items-center gap-3 bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-white/50" >
+                    <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 active:scale-[0.98] transition-all"
+                    >
+                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        {isPlaying ? 'Pause' : 'Play'}
+                    </button>
+                    < button
+                        onClick={restartAnimation}
+                        className="flex items-center justify-center p-2 rounded-xl bg-slate-100/80 text-slate-600 hover:bg-white active:scale-[0.98] transition-all shadow-sm"
+                        title="Restart Animation"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                    </button>
+                    < button
+                        onClick={isRecording ? stopRecording : handleRecord}
+                        className={`flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-medium transition-all active:scale-[0.98] ${isRecording
+                            ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
+                            }`}
+                        title={isRecording ? "Stop Recording" : "Record as WebM"}
+                    >
+                        {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Video className="w-4 h-4" />}
+                        {isRecording ? `Stop (${Math.round(recordingProgress * 100)}%)` : 'Record'}
+                    </button>
+                </div>
+
                 {/* Checkerboard background pattern for transparency visualization */}
                 < div
                     className="absolute inset-0 opacity-40 pointer-events-none"
@@ -636,18 +650,30 @@ export default function SvgTracer() {
                         {/* Reference Image Overlay */}
                         {overlayImage && config.showOverlay && (
                             <div
-                                className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-300 z-0 ${config.isOverlayDraggable ? 'cursor-move pointer-events-auto' : 'pointer-events-none'}`}
+                                className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-300 z-0 ${config.isOverlayDraggable ? 'pointer-events-auto' : 'pointer-events-none'}`}
                                 style={{
                                     opacity: config.overlayOpacity,
                                     transform: `translate(${overlayPos.x}px, ${overlayPos.y}px) scale(${config.overlayScale})`
                                 }}
-                                onMouseDown={handleMouseDown}
                             >
-                                <img
-                                    src={overlayImage}
-                                    alt="Reference"
-                                    className="max-w-full max-h-full object-contain select-none"
-                                />
+                                <div
+                                    className={`relative flex items-center justify-center transition-all ${config.isOverlayDraggable ? 'cursor-move ring-2 ring-indigo-500 ring-dashed shadow-2xl bg-indigo-500/10' : ''}`}
+                                    onMouseDown={handleMouseDown}
+                                >
+                                    <img
+                                        src={overlayImage}
+                                        alt="Reference"
+                                        className="max-w-full max-h-full object-contain select-none pointer-events-none"
+                                        draggable={false}
+                                    />
+                                    {config.isOverlayDraggable && (
+                                        <div
+                                            className="absolute -bottom-3 -right-3 w-6 h-6 bg-white border-2 border-indigo-500 rounded-full cursor-se-resize shadow-md hover:scale-110 active:scale-95 transition-transform"
+                                            onMouseDown={handleResizeMouseDown}
+                                            title="Drag to resize"
+                                        />
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -668,21 +694,31 @@ export default function SvgTracer() {
     );
 }
 
-// Helper component for uniform slider groups
-interface ControlGroupProps {
+// Helper component for uniform number inputs
+interface NumberInputProps {
     label: string;
-    value: string;
-    children: React.ReactNode;
+    value: number;
+    min?: number;
+    max?: number;
+    step?: number;
+    unit?: string;
+    onChange: (val: number) => void;
 }
 
-function ControlGroup({ label, value, children }: ControlGroupProps) {
+function NumberInput({ label, value, min, max, step, unit, onChange }: NumberInputProps) {
     return (
-        <div className="space-y-2" >
-            <div className="flex justify-between items-center text-sm" >
-                <label className="font-medium text-slate-700" > {label} </label>
-                < span className="text-slate-500 font-mono text-xs bg-slate-100 px-2 py-0.5 rounded" > {value} </span>
+        <div className="flex justify-between items-center text-sm" >
+            <label className="text-slate-700" > {label} </label>
+            <div className="flex items-center gap-1">
+                <input
+                    type="number"
+                    min={min} max={max} step={step}
+                    value={value}
+                    onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+                    className="w-16 text-right text-xs p-1 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-1 focus:ring-indigo-500 font-mono text-slate-600"
+                />
+                {unit && <span className="text-xs text-slate-400 font-medium w-3">{unit}</span>}
             </div>
-            {children}
         </div>
     );
 }

@@ -4,7 +4,8 @@ Add your new features and tasks below:
 
 ## Planned Features
 
-- [ ] Add new feature 1
+- [x] Resize and position the reference image using a select box
+
 - [ ] Add new feature 2
 
 ## Bugs
