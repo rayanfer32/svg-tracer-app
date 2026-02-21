@@ -484,7 +484,7 @@ export default function SvgTracer() {
                         {/* Reference Image Overlay */}
                         {overlayImage && config.showOverlay && (
                             <div
-                                className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-300 ${config.isOverlayDraggable ? 'cursor-move pointer-events-auto z-20' : 'pointer-events-none z-0'}`}
+                                className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-300 z-0 ${config.isOverlayDraggable ? 'cursor-move pointer-events-auto' : 'pointer-events-none'}`}
                                 style={{
                                     opacity: config.overlayOpacity,
                                     transform: `translate(${overlayPos.x}px, ${overlayPos.y}px) scale(${config.overlayScale})`
@@ -506,7 +506,7 @@ export default function SvgTracer() {
                         < div
                             key={animationKey}
                             ref={svgContainerRef}
-                            className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''}`}
+                            className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''} ${config.isOverlayDraggable ? 'pointer-events-none' : ''}`}
                             dangerouslySetInnerHTML={{ __html: svgContent }}
                         />
                     </div>
