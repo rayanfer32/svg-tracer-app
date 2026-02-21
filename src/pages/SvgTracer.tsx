@@ -19,6 +19,7 @@ export default function SvgTracer() {
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, scale: 1 });
     const [isPlaying, setIsPlaying] = useState<boolean>(true);
+    const [isStopped, setIsStopped] = useState<boolean>(false);
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const isRecordingRef = useRef<boolean>(false);
     const [shouldStopRecording, setShouldStopRecording] = useState<boolean>(false);
@@ -111,13 +112,30 @@ export default function SvgTracer() {
     const handleConfigChange = <T extends keyof TracerConfig>(key: T, value: TracerConfig[T]) => {
         setConfig(prev => ({ ...prev, [key]: value }));
         // Auto-restart animation when config changes for better UX
+        setIsStopped(false);
         setAnimationKey(prev => prev + 1);
         setIsPlaying(true);
     };
 
     const restartAnimation = () => {
+        setIsStopped(false);
         setAnimationKey(prev => prev + 1);
         setIsPlaying(true);
+    };
+
+    const stopAnimation = () => {
+        setIsStopped(true);
+        setIsPlaying(false);
+    };
+
+    const togglePlay = () => {
+        if (isStopped) {
+            setIsStopped(false);
+            setAnimationKey(prev => prev + 1);
+            setIsPlaying(true);
+        } else {
+            setIsPlaying(!isPlaying);
+        }
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -156,8 +174,6 @@ export default function SvgTracer() {
         setOverlayPos({ x: 0, y: 0 });
         handleConfigChange('overlayScale', 1);
     };
-
-
 
     const handleRecord = async () => {
         if (!previewAreaRef.current || isRecording) return;
@@ -303,18 +319,24 @@ export default function SvgTracer() {
             // Set CSS variables and initial styles directly on the element
             svgEl.style.setProperty('--path-length', length.toString());
             svgEl.style.strokeDasharray = length.toString();
-            svgEl.style.strokeDashoffset = length.toString();
 
-            // Apply the animation properties
-            svgEl.style.animationName = 'svg-trace';
-            svgEl.style.animationDuration = `${config.duration}s`;
-            svgEl.style.animationTimingFunction = config.easing;
-            svgEl.style.animationDelay = `${config.delay + (index * config.stagger)}s`;
-            svgEl.style.animationDirection = config.direction;
-            svgEl.style.animationFillMode = 'forwards';
+            if (isStopped) {
+                svgEl.style.animation = 'none';
+                svgEl.style.strokeDashoffset = '0';
+            } else {
+                svgEl.style.strokeDashoffset = length.toString();
 
-            // Apply play state based on React state
-            svgEl.style.animationPlayState = isPlaying ? 'running' : 'paused';
+                // Apply the animation properties
+                svgEl.style.animationName = 'svg-trace';
+                svgEl.style.animationDuration = `${config.duration}s`;
+                svgEl.style.animationTimingFunction = config.easing;
+                svgEl.style.animationDelay = `${config.delay + (index * config.stagger)}s`;
+                svgEl.style.animationDirection = config.direction;
+                svgEl.style.animationFillMode = 'forwards';
+
+                // Apply play state based on React state
+                svgEl.style.animationPlayState = isPlaying ? 'running' : 'paused';
+            }
 
             // Extract fill for original color mode
             if (config.useOriginalColor) {
@@ -337,7 +359,7 @@ export default function SvgTracer() {
                 svgEl.style.removeProperty('--item-stroke');
             }
         });
-    }, [svgContent, config, animationKey, isPlaying]);
+    }, [svgContent, config, animationKey, isPlaying, isStopped]);
     // We include isPlaying here to update the animationPlayState without fully remounting
 
     return (
@@ -565,10 +587,11 @@ export default function SvgTracer() {
                 {/* Playback Controls Float */}
                 <PlaybackControls
                     isPlaying={isPlaying}
-                    setIsPlaying={setIsPlaying}
+                    togglePlay={togglePlay}
                     isRecording={isRecording}
                     recordingProgress={recordingProgress}
                     restartAnimation={restartAnimation}
+                    stopAnimation={stopAnimation}
                     handleRecord={handleRecord}
                     stopRecording={stopRecording}
                 />
