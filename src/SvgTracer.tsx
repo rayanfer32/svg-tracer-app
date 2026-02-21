@@ -1,8 +1,10 @@
 import {
     Play, Pause, RotateCcw, Upload, Settings2,
-    Image as ImageIcon, MousePointerClick, ExternalLink, Wrench
+    Image as ImageIcon, MousePointerClick, ExternalLink, Wrench,
+    Video, Download, Square
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { toCanvas } from 'html-to-image';
 
 interface TracerConfig {
     duration: number;
@@ -45,8 +47,13 @@ export default function SvgTracer() {
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [isPlaying, setIsPlaying] = useState<boolean>(true);
+    const [isRecording, setIsRecording] = useState<boolean>(false);
+    const isRecordingRef = useRef<boolean>(false);
+    const [shouldStopRecording, setShouldStopRecording] = useState<boolean>(false);
+    const [recordingProgress, setRecordingProgress] = useState<number>(0);
     const [animationKey, setAnimationKey] = useState<number>(0); // Used to force re-render and restart animation
     const svgContainerRef = useRef<HTMLDivElement>(null);
+    const previewAreaRef = useRef<HTMLDivElement>(null);
 
     // Configuration state
     const [config, setConfig] = useState<TracerConfig>({
@@ -131,8 +138,140 @@ export default function SvgTracer() {
         handleConfigChange('overlayScale', 1);
     };
 
+    // Simple easing functions for manual recording
+    const easeFunctions: Record<string, (t: number) => number> = {
+        'linear': (t) => t,
+        'ease-in': (t) => t * t,
+        'ease-out': (t) => 1 - Math.pow(1 - t, 2),
+        'ease-in-out': (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
+        'ease': (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, // approximation
+    };
+
+    const handleRecord = async () => {
+        if (!previewAreaRef.current || isRecording) return;
+
+        try {
+            isRecordingRef.current = true;
+            setIsRecording(true);
+            setIsPlaying(false); // Stop real-time playback
+            setRecordingProgress(0);
+            (window as any).__stopRecording = false;
+
+            const elements = svgContainerRef.current?.querySelectorAll(
+                'path, circle, rect, line, polyline, polygon, ellipse'
+            ) || [];
+
+            // Pre-calculate lengths
+            const elementData = Array.from(elements).map(el => ({
+                el: el as SVGElement,
+                length: (el as unknown as SVGGeometryElement).getTotalLength?.() || 0
+            }));
+
+            const totalDurationSec = config.delay + (elements.length * config.stagger) + config.duration;
+            const fps = 30;
+            const totalFrames = Math.ceil(totalDurationSec * fps);
+
+            // Setup recording canvas
+            const element = previewAreaRef.current;
+            const captureCanvas = document.createElement('canvas');
+            const stream = captureCanvas.captureStream(fps);
+            const recorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9',
+                videoBitsPerSecond: 8000000 // 8Mbps
+            });
+
+            const chunks: Blob[] = [];
+            recorder.ondataavailable = (e) => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `svg-animation-${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                isRecordingRef.current = false;
+                setIsRecording(false);
+                setIsPlaying(true); // Resume normal UI
+            };
+
+            recorder.start();
+
+            const ease = (t: number) => {
+                const fn = easeFunctions[config.easing] || easeFunctions['linear'];
+                return fn ? fn(t) : t;
+            };
+
+            // Frame-perfect render loop
+            for (let frame = 0; frame <= totalFrames; frame++) {
+                if ((window as any).__stopRecording) break;
+                const currentTime = frame / fps;
+                setRecordingProgress(frame / totalFrames);
+
+                // Re-query elements in case React detached/re-rendered them
+                const currentElements = svgContainerRef.current?.querySelectorAll(
+                    'path, circle, rect, line, polyline, polygon, ellipse'
+                ) || [];
+
+                // Manually position all paths for this specific point in time
+                Array.from(currentElements).forEach((el, index) => {
+                    const geometryEl = el as unknown as SVGGeometryElement;
+                    const length = geometryEl.getTotalLength?.() || 0;
+                    if (length <= 0) return;
+
+                    const svgEl = el as SVGElement;
+                    const startTime = config.delay + (index * config.stagger);
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.max(0, Math.min(elapsed / config.duration, 1));
+                    const easedProgress = ease(progress);
+
+                    const offset = (length * (1 - easedProgress)).toString();
+
+                    // Force the exact offset and kill transitions
+                    svgEl.style.transition = 'none';
+                    svgEl.style.animation = 'none';
+
+                    // Ensure dash array is present
+                    svgEl.style.strokeDasharray = length.toString();
+                    svgEl.setAttribute('stroke-dasharray', length.toString());
+
+                    svgEl.style.strokeDashoffset = offset;
+                    svgEl.setAttribute('stroke-dashoffset', offset);
+                });
+
+                // Force a browser paint so the user can see the scrubbing
+                await new Promise(r => requestAnimationFrame(r));
+
+                // Wait for library to convert to canvas
+                const frameCanvas = await toCanvas(element, {
+                    backgroundColor: '#f1f5f9',
+                    pixelRatio: 1,
+                });
+
+                captureCanvas.width = frameCanvas.width;
+                captureCanvas.height = frameCanvas.height;
+                const ctx = captureCanvas.getContext('2d');
+                if (ctx) ctx.drawImage(frameCanvas, 0, 0);
+            }
+
+            recorder.stop();
+
+        } catch (error) {
+            console.error('Recording failed:', error);
+            isRecordingRef.current = false;
+            setIsRecording(false);
+            setIsPlaying(true);
+            alert('Failed to record animation.');
+        }
+    };
+
+    const stopRecording = () => {
+        (window as any).__stopRecording = true;
+    };
+
     useEffect(() => {
         if (!svgContainerRef.current) return;
+        if (isRecordingRef.current) return;
 
         // Select all animatable geometry elements
         const elements = svgContainerRef.current.querySelectorAll(
@@ -277,6 +416,17 @@ export default function SvgTracer() {
                         title="Restart Animation"
                     >
                         <RotateCcw className="w-5 h-5" />
+                    </button>
+                    < button
+                        onClick={isRecording ? stopRecording : handleRecord}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-all active:scale-[0.98] ${isRecording
+                            ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
+                            }`}
+                        title={isRecording ? "Stop Recording" : "Record as WebM"}
+                    >
+                        {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Video className="w-4 h-4" />}
+                        {isRecording ? `Stop (${Math.round(recordingProgress * 100)}%)` : 'Record'}
                     </button>
                 </div>
 
@@ -463,7 +613,7 @@ export default function SvgTracer() {
             </aside>
 
             {/* Main Preview Area */}
-            <main className="flex-1 flex flex-col bg-slate-100 overflow-hidden relative" >
+            <main ref={previewAreaRef} className="flex-1 flex flex-col bg-slate-100 overflow-hidden relative" >
                 {/* Checkerboard background pattern for transparency visualization */}
                 < div
                     className="absolute inset-0 opacity-40 pointer-events-none"
@@ -512,18 +662,6 @@ export default function SvgTracer() {
                             dangerouslySetInnerHTML={{ __html: svgContent }}
                         />
                     </div>
-                </div>
-
-                {/* Status bar */}
-                <div className="h-12 bg-white border-t border-slate-200 flex items-center px-4 justify-between z-10 text-xs text-slate-500 relative" >
-                    <div className="flex items-center gap-2" >
-                        <span className="relative flex h-2 w-2" >
-                            {isPlaying && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" > </span>}
-                            <span className={`relative inline-flex rounded-full h-2 w-2 ${isPlaying ? 'bg-emerald-500' : 'bg-slate-400'}`}> </span>
-                        </span>
-                        {isPlaying ? 'Animation Running' : 'Paused'}
-                    </div>
-                    < div > SVG Tracer preview environment </div>
                 </div>
             </main>
         </div>
