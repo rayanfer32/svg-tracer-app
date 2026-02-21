@@ -43,14 +43,14 @@ export default function SvgTracer() {
     // Configuration state
     const [config, setConfig] = useState<TracerConfig>({
         duration: 2,
-        stagger: 0.2,
-        delay: 0.5,
-        easing: 'ease-in-out',
+        stagger: 2,
+        delay: 1,
+        easing: 'linear',
         direction: 'normal',
         forceOutline: true,
         useOriginalColor: true,
         strokeColor: '#3b82f6', // blue-500
-        strokeWidth: 2
+        strokeWidth: 4
     });
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,6 +231,15 @@ export default function SvgTracer() {
                             type="range" min="0" max="5" step="0.1"
                             value={config.delay}
                             onChange={(e) => handleConfigChange('delay', parseFloat(e.target.value))}
+                            className="w-full accent-indigo-600"
+                        />
+                    </ControlGroup>
+
+                    < ControlGroup label="Stroke Width" value={`${config.strokeWidth}px`}>
+                        <input
+                            type="range" min="0.1" max="20" step="0.1"
+                            value={config.strokeWidth}
+                            onChange={(e) => handleConfigChange('strokeWidth', parseFloat(e.target.value))}
                             className="w-full accent-indigo-600"
                         />
                     </ControlGroup>
