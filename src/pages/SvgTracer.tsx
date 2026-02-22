@@ -138,34 +138,48 @@ export default function SvgTracer() {
         }
     };
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if (!config.isOverlayDraggable || !overlayImage) return;
-        setIsDragging(true);
-        setDragStart({ x: e.clientX - overlayPos.x, y: e.clientY - overlayPos.y });
+    const getEventPoint = (e: React.MouseEvent | React.TouchEvent) => {
+        if ('touches' in e) {
+            return {
+                x: e.touches[0]?.clientX || 0,
+                y: e.touches[0]?.clientY || 0
+            };
+        }
+        return { x: e.clientX, y: e.clientY };
     };
 
-    const handleResizeMouseDown = (e: React.MouseEvent) => {
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!config.isOverlayDraggable || !overlayImage) return;
+        setIsDragging(true);
+        const p = getEventPoint(e);
+        setDragStart({ x: p.x - overlayPos.x, y: p.y - overlayPos.y });
+    };
+
+    const handleResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
         e.stopPropagation(); // prevent drag from starting
         if (!config.isOverlayDraggable || !overlayImage) return;
         setIsResizing(true);
-        setResizeStart({ x: e.clientX, y: e.clientY, scale: config.overlayScale });
+        const p = getEventPoint(e);
+        setResizeStart({ x: p.x, y: p.y, scale: config.overlayScale });
     };
 
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDragging && !isResizing) return;
+        const p = getEventPoint(e);
         if (isDragging) {
             setOverlayPos({
-                x: e.clientX - dragStart.x,
-                y: e.clientY - dragStart.y
+                x: p.x - dragStart.x,
+                y: p.y - dragStart.y
             });
         } else if (isResizing) {
-            const dx = e.clientX - resizeStart.x;
+            const dx = p.x - resizeStart.x;
             // Scale dynamically (dx moves right to scale up, left to scale down)
             const newScale = Math.max(0.1, resizeStart.scale + dx * 0.005);
             handleConfigChange('overlayScale', newScale);
         }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
         setIsDragging(false);
         setIsResizing(false);
     };
@@ -609,10 +623,13 @@ export default function SvgTracer() {
                 />
 
                 < div
-                    className="flex-1 flex items-center justify-center p-8 relative z-10 overflow-auto"
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
+                    className={`flex-1 flex items-center justify-center p-8 relative z-10 overflow-auto ${config.isOverlayDraggable ? 'touch-none' : ''}`}
+                    onMouseMove={handleMove}
+                    onTouchMove={handleMove}
+                    onMouseUp={handleEnd}
+                    onTouchEnd={handleEnd}
+                    onMouseLeave={handleEnd}
+                    onTouchCancel={handleEnd}
                 >
                     <div
                         className="w-full max-w-2xl aspect-square flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 transition-all relative"
@@ -627,8 +644,9 @@ export default function SvgTracer() {
                                 }}
                             >
                                 <div
-                                    className={`relative flex items-center justify-center transition-all ${config.isOverlayDraggable ? 'cursor-move ring-2 ring-indigo-500 ring-dashed shadow-2xl bg-indigo-500/10' : ''}`}
-                                    onMouseDown={handleMouseDown}
+                                    className={`relative flex items-center justify-center transition-all ${config.isOverlayDraggable ? 'cursor-move ring-2 ring-indigo-500 ring-dashed shadow-2xl bg-indigo-500/10 touch-none' : ''}`}
+                                    onMouseDown={handleDragStart}
+                                    onTouchStart={handleDragStart}
                                 >
                                     <img
                                         src={overlayImage}
@@ -639,7 +657,8 @@ export default function SvgTracer() {
                                     {config.isOverlayDraggable && (
                                         <div
                                             className="absolute -bottom-3 -right-3 w-6 h-6 bg-white border-2 border-indigo-500 rounded-full cursor-se-resize shadow-md hover:scale-110 active:scale-95 transition-transform"
-                                            onMouseDown={handleResizeMouseDown}
+                                            onMouseDown={handleResizeStart}
+                                            onTouchStart={handleResizeStart}
                                             title="Drag to resize"
                                         />
                                     )}
