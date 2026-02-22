@@ -42,7 +42,8 @@ export default function SvgTracer() {
         showOverlay: true,
         overlayOpacity: 0.3,
         isOverlayDraggable: false,
-        overlayScale: 1
+        overlayScale: 1,
+        svgScale: 1
     });
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -482,6 +483,7 @@ export default function SvgTracer() {
                         <NumberInput label="Stagger Step" value={config.stagger} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('stagger', val)} />
                         <NumberInput label="Initial Delay" value={config.delay} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('delay', val)} />
                         <NumberInput label="Stroke Width" value={config.strokeWidth} min={0.1} max={20} step={0.1} unit="px" onChange={(val) => handleConfigChange('strokeWidth', val)} />
+                        <NumberInput label="SVG Scale" value={config.svgScale} min={0.1} max={5} step={0.1} unit={'x'} onChange={(val) => handleConfigChange('svgScale', val)} />
                     </div>
 
                     < div className="grid grid-cols-2 gap-4" >
@@ -670,6 +672,7 @@ export default function SvgTracer() {
                             key={animationKey}
                             ref={svgContainerRef}
                             className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''} ${config.isOverlayDraggable ? 'pointer-events-none' : ''}`}
+                            style={{ transform: `scale(${config.svgScale})` }}
                             // We use dangerouslySetInnerHTML to inject the raw SVG. The key prop forces React to completely destroy and recreate this DOM node when animationKey changes, ensuring CSS animations restart cleanly.
                             dangerouslySetInnerHTML={{ __html: svgContent }}
                         />
