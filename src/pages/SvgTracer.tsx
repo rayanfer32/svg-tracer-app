@@ -597,7 +597,7 @@ export default function SvgTracer() {
             </aside>
 
             {/* Main Preview Area */}
-            <main ref={previewAreaRef} className="flex flex-col h-screen bg-slate-200 relative" >
+            <main ref={previewAreaRef} className="flex flex-col h-screen md:h-auto md:flex-1 bg-slate-200 relative" >
                 {/* Checkerboard background pattern for transparency visualization */}
                 < div
                     className="absolute inset-0 opacity-40 pointer-events-none"
