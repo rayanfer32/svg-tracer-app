@@ -623,7 +623,7 @@ export default function SvgTracer() {
                 />
 
                 < div
-                    className={`flex-1 flex items-center justify-center p-8 relative z-10 overflow-auto ${config.isOverlayDraggable ? 'touch-none' : ''}`}
+                    className="flex-1 flex items-center justify-center p-8 relative z-10 overflow-auto"
                     onMouseMove={handleMove}
                     onTouchMove={handleMove}
                     onMouseUp={handleEnd}
@@ -644,7 +644,7 @@ export default function SvgTracer() {
                                 }}
                             >
                                 <div
-                                    className={`relative flex items-center justify-center transition-all ${config.isOverlayDraggable ? 'cursor-move ring-2 ring-indigo-500 ring-dashed shadow-2xl bg-indigo-500/10 touch-none' : ''}`}
+                                    className={`relative flex items-center justify-center transition-all ${config.isOverlayDraggable ? 'cursor-move ring-1 ring-indigo-200 shadow-2xl bg-indigo-500/10 touch-none' : ''}`}
                                     onMouseDown={handleDragStart}
                                     onTouchStart={handleDragStart}
                                 >
@@ -656,7 +656,7 @@ export default function SvgTracer() {
                                     />
                                     {config.isOverlayDraggable && (
                                         <div
-                                            className="absolute -bottom-3 -right-3 w-6 h-6 bg-white border-2 border-indigo-500 rounded-full cursor-se-resize shadow-md hover:scale-110 active:scale-95 transition-transform"
+                                            className="absolute -bottom-1 -right-1 w-2 h-2 bg-white border border-indigo-100 rounded-full cursor-se-resize shadow-md hover:scale-110 active:scale-95 transition-transform"
                                             onMouseDown={handleResizeStart}
                                             onTouchStart={handleResizeStart}
                                             title="Drag to resize"
