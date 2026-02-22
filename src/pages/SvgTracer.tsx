@@ -25,6 +25,8 @@ export default function SvgTracer() {
     const [shouldStopRecording, setShouldStopRecording] = useState<boolean>(false);
     const [recordingProgress, setRecordingProgress] = useState<number>(0);
     const [animationKey, setAnimationKey] = useState<number>(0); // Used to force re-render and restart animation
+    const [currentTime, setCurrentTime] = useState<number>(0);
+    const [totalDuration, setTotalDuration] = useState<number>(0);
     const svgContainerRef = useRef<HTMLDivElement>(null);
     const previewAreaRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +136,7 @@ export default function SvgTracer() {
             setIsStopped(false);
             setAnimationKey(prev => prev + 1);
             setIsPlaying(true);
+            setCurrentTime(0);
         } else {
             setIsPlaying(!isPlaying);
         }
@@ -312,69 +315,89 @@ export default function SvgTracer() {
         (window as any).__stopRecording = true;
     };
 
-    useEffect(() => {
+    const renderFrame = (time: number) => {
         if (!svgContainerRef.current) return;
-        if (isRecordingRef.current) return;
 
-        // Select all animatable geometry elements
         const elements = svgContainerRef.current.querySelectorAll(
             'path, circle, rect, line, polyline, polygon, ellipse'
         );
 
+        const ease = (t: number) => {
+            const fn = easeFunctions[config.easing] || easeFunctions['linear'];
+            return fn ? fn(t) : t;
+        };
+
         elements.forEach((el, index) => {
             const geometryEl = el as unknown as SVGGeometryElement;
-            // Calculate length for dashed drawing effect
             const length = geometryEl.getTotalLength ? geometryEl.getTotalLength() : 0;
-
-            // If it's a point or invalid, skip
             if (length <= 0) return;
 
             const svgEl = el as SVGElement;
 
-            // Set CSS variables and initial styles directly on the element
-            svgEl.style.setProperty('--path-length', length.toString());
+            // Kill all CSS animations to prevent flickering/conflicts
+            svgEl.style.animation = 'none';
+            svgEl.style.transition = 'none';
+
+            const startTime = config.delay + (index * config.stagger);
+            const elapsed = time - startTime;
+            const progress = Math.max(0, Math.min(elapsed / config.duration, 1));
+            const easedProgress = ease(progress);
+            const offset = length * (1 - easedProgress);
+
             svgEl.style.strokeDasharray = length.toString();
+            svgEl.style.strokeDashoffset = offset.toString();
 
-            if (isStopped) {
-                svgEl.style.animation = 'none';
-                svgEl.style.strokeDashoffset = '0';
-            } else {
-                svgEl.style.strokeDashoffset = length.toString();
-
-                // Apply the animation properties
-                svgEl.style.animationName = 'svg-trace';
-                svgEl.style.animationDuration = `${config.duration}s`;
-                svgEl.style.animationTimingFunction = config.easing;
-                svgEl.style.animationDelay = `${config.delay + (index * config.stagger)}s`;
-                svgEl.style.animationDirection = config.direction;
-                svgEl.style.animationFillMode = 'forwards';
-
-                // Apply play state based on React state
-                svgEl.style.animationPlayState = isPlaying ? 'running' : 'paused';
-            }
-
-            // Extract fill for original color mode
             if (config.useOriginalColor) {
-                // We check attributes and inline styles directly to avoid getting "transparent" from forced CSS
                 let color = el.getAttribute('fill') || el.getAttribute('stroke') || svgEl.style.fill || svgEl.style.stroke;
-
-                // If not found, try to climb up the SVG tree to find inherited attributes (like on a <g>)
                 let parent = el.parentElement;
                 while (!color && parent && parent.tagName.toLowerCase() !== 'div') {
                     color = parent.getAttribute('fill') || parent.getAttribute('stroke') || 'black';
                     parent = parent.parentElement;
                 }
-
                 if (color && typeof color === 'string' && color !== 'none' && color !== 'transparent' && !color.includes('rgba(0, 0, 0, 0)')) {
                     svgEl.style.setProperty('--item-stroke', color);
-                } else {
-                    svgEl.style.removeProperty('--item-stroke');
                 }
-            } else {
-                svgEl.style.removeProperty('--item-stroke');
             }
         });
-    }, [svgContent, config, animationKey, isPlaying, isStopped]);
+    };
+
+    useEffect(() => {
+        if (isRecording) return;
+
+        // Update total duration whenever config or SVG changes
+        const elements = svgContainerRef.current?.querySelectorAll(
+            'path, circle, rect, line, polyline, polygon, ellipse'
+        ) || [];
+        const duration = config.delay + (elements.length * config.stagger) + config.duration;
+        setTotalDuration(duration);
+
+        if (!isPlaying || isStopped) {
+            renderFrame(currentTime);
+            return;
+        }
+
+        let rafId: number;
+        let lastTime = performance.now();
+        const startTime = lastTime - (currentTime * 1000);
+
+        const update = (now: number) => {
+            const elapsed = (now - startTime) / 1000;
+
+            if (elapsed >= duration) {
+                setCurrentTime(duration);
+                renderFrame(duration);
+                setIsPlaying(false);
+                return;
+            }
+
+            setCurrentTime(elapsed);
+            renderFrame(elapsed);
+            rafId = requestAnimationFrame(update);
+        };
+
+        rafId = requestAnimationFrame(update);
+        return () => cancelAnimationFrame(rafId);
+    }, [isPlaying, isRecording, isStopped, totalDuration, animationKey, config, svgContent, currentTime]);
     // We include isPlaying here to update the animationPlayState without fully remounting
 
     return (
@@ -404,7 +427,7 @@ export default function SvgTracer() {
                 </div>
 
                 {/* Playback Controls */}
-                <div className="border-b border-slate-100 pb-4">
+                <div className="border-b border-slate-100 pb-4 space-y-4">
                     <PlaybackControls
                         isPlaying={isPlaying}
                         togglePlay={togglePlay}
@@ -415,6 +438,26 @@ export default function SvgTracer() {
                         handleRecord={handleRecord}
                         stopRecording={stopRecording}
                     />
+
+                    <div className="space-y-1.5 px-1">
+                        <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                            <span>Progress</span>
+                            <span>{currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s</span>
+                        </div>
+                        <input
+                            type="range"
+                            min={0}
+                            max={totalDuration || 1}
+                            step={0.01}
+                            value={currentTime}
+                            onChange={(e) => {
+                                setIsPlaying(false);
+                                setIsStopped(false);
+                                setCurrentTime(parseFloat(e.target.value));
+                            }}
+                            className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        />
+                    </div>
                 </div>
 
                 {/* Upload Section */}
