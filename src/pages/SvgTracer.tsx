@@ -388,6 +388,20 @@ export default function SvgTracer() {
                     </h1>
                 </div>
 
+                {/* Playback Controls */}
+                <div className="border-b border-slate-100 pb-4">
+                    <PlaybackControls
+                        isPlaying={isPlaying}
+                        togglePlay={togglePlay}
+                        isRecording={isRecording}
+                        recordingProgress={recordingProgress}
+                        restartAnimation={restartAnimation}
+                        stopAnimation={stopAnimation}
+                        handleRecord={handleRecord}
+                        stopRecording={stopRecording}
+                    />
+                </div>
+
                 {/* Upload Section */}
                 <div className="space-y-2 border-b border-slate-100 pb-4" >
                     <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
@@ -583,19 +597,7 @@ export default function SvgTracer() {
             </aside>
 
             {/* Main Preview Area */}
-            <main ref={previewAreaRef} className="flex-1 flex flex-col bg-slate-100 overflow-hidden relative" >
-                {/* Playback Controls Float */}
-                <PlaybackControls
-                    isPlaying={isPlaying}
-                    togglePlay={togglePlay}
-                    isRecording={isRecording}
-                    recordingProgress={recordingProgress}
-                    restartAnimation={restartAnimation}
-                    stopAnimation={stopAnimation}
-                    handleRecord={handleRecord}
-                    stopRecording={stopRecording}
-                />
-
+            <main ref={previewAreaRef} className="flex flex-col h-screen bg-slate-200 relative" >
                 {/* Checkerboard background pattern for transparency visualization */}
                 < div
                     className="absolute inset-0 opacity-40 pointer-events-none"
