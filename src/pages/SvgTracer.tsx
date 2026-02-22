@@ -34,7 +34,7 @@ export default function SvgTracer() {
     const [config, setConfig] = useState<TracerConfig>({
         duration: 1.8,
         stagger: 2,
-        delay: 1,
+        delay: 2,
         easing: 'linear',
         direction: 'normal',
         forceOutline: true,
