@@ -123,12 +123,19 @@ export default function SvgTracer() {
     const restartAnimation = () => {
         setIsStopped(false);
         setAnimationKey(prev => prev + 1);
+        setCurrentTime(0);
         setIsPlaying(true);
     };
 
     const stopAnimation = () => {
         setIsStopped(true);
         setIsPlaying(false);
+        // Set to end of animation
+        const elements = svgContainerRef.current?.querySelectorAll(
+            'path, circle, rect, line, polyline, polygon, ellipse'
+        ) || [];
+        const duration = config.delay + (elements.length * config.stagger) + config.duration;
+        setCurrentTime(duration);
     };
 
     const togglePlay = () => {
