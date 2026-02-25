@@ -9,8 +9,10 @@ import { DEFAULT_SVG, easeFunctions } from '../utils/constants';
 import { NumberInput } from '../components/NumberInput';
 import { ToolkitLink } from '../components/ToolkitLink';
 import { PlaybackControls } from '../components/PlaybackControls';
+import { ImageTracer } from '../components/ImageTracer';
 
 export default function SvgTracer() {
+    const [activeTab, setActiveTab] = useState<'animation' | 'tracer'>('animation');
     const [svgContent, setSvgContent] = useState<string>(DEFAULT_SVG);
     const [overlayImage, setOverlayImage] = useState<string | null>(null);
     const [overlayPos, setOverlayPos] = useState({ x: 0, y: 0 });
@@ -40,7 +42,7 @@ export default function SvgTracer() {
         forceOutline: true,
         useOriginalColor: true,
         strokeColor: '#3b82f6', // blue-500
-        strokeWidth: 4,
+        strokeWidth: 0.5,
         showOverlay: true,
         overlayOpacity: 0.3,
         isOverlayDraggable: false,
@@ -118,6 +120,12 @@ export default function SvgTracer() {
         setIsStopped(false);
         setAnimationKey(prev => prev + 1);
         setIsPlaying(true);
+    };
+
+    const handleOnApplyTracedSvg = (newSvg: string) => {
+        setSvgContent(newSvg);
+        setAnimationKey(prev => prev + 1);
+        setActiveTab('animation');
     };
 
     const restartAnimation = () => {
@@ -433,233 +441,255 @@ export default function SvgTracer() {
                     </h1>
                 </div>
 
-                {/* Playback Controls */}
-                <div className="border-b border-slate-100 pb-4 space-y-4">
-                    <PlaybackControls
-                        isPlaying={isPlaying}
-                        togglePlay={togglePlay}
-                        isRecording={isRecording}
-                        recordingProgress={recordingProgress}
-                        restartAnimation={restartAnimation}
-                        stopAnimation={stopAnimation}
-                        handleRecord={handleRecord}
-                        stopRecording={stopRecording}
-                    />
-
-                    <div className="space-y-1.5 px-1">
-                        <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-                            <span>Progress</span>
-                            <span>{currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s</span>
-                        </div>
-                        <input
-                            type="range"
-                            min={0}
-                            max={totalDuration || 1}
-                            step={0.01}
-                            value={currentTime}
-                            onChange={(e) => {
-                                setIsPlaying(false);
-                                setIsStopped(false);
-                                setCurrentTime(parseFloat(e.target.value));
-                            }}
-                            className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                        />
-                    </div>
-                </div>
-
-                {/* Upload Section */}
-                <div className="space-y-2 border-b border-slate-100 pb-4" >
-                    <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
-                        <label
-                            className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group"
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={handleSvgDrop}
-                        >
-                            <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
-                            <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
-                                Load SVG
-                            </span>
-                            < input
-                                type="file"
-                                accept=".svg"
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                        </label>
-
-                        < label
-                            className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={handleImageDrop}
-                        >
-                            <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
-                            <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
-                                Ref Image
-                            </span>
-                            < input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleImageUpload}
-                            />
-                        </label>
-                    </div>
-
-                    {/* Toolkit Section */}
-                    <div className="pt-2">
-                        <div className="flex items-center gap-2 text-slate-800 font-semibold mb-3 px-1" >
-                            <Wrench className="w-4 h-4 text-indigo-500" />
-                            Toolkit
-                        </div>
-                        <div className="flex flex-row flex-wrap gap-1.5">
-                            <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
-                            <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="Image VTracer" />
-                            <ToolkitLink href="https://editor.graphite.art/" label="Graphite Editor" />
-                            {/* <ToolkitLink href="https://svgartista.net/" label="Svg Artista" />
-                            <ToolkitLink href="https://svglogos.dev/" label="Svglogos.dev" /> */}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Configuration */}
-                <div className="space-y-3" >
-                    <div className="flex items-center gap-2 text-slate-800 font-semibold border-b border-slate-100 pb-1.5" >
-                        <Settings2 className="w-4 h-4" />
+                {/* Tab Switcher */}
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button
+                        onClick={() => setActiveTab('animation')}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'animation' ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
                         Animation
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                        <NumberInput label="Duration" value={config.duration} min={0.1} max={10} step={0.1} unit="s" onChange={(val) => handleConfigChange('duration', val)} />
-                        <NumberInput label="Stagger Step" value={config.stagger} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('stagger', val)} />
-                        <NumberInput label="Initial Delay" value={config.delay} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('delay', val)} />
-                        <NumberInput label="Stroke Width" value={config.strokeWidth} min={0.1} max={20} step={0.1} unit="px" onChange={(val) => handleConfigChange('strokeWidth', val)} />
-                        <NumberInput label="SVG Scale" value={config.svgScale} min={0.1} max={5} step={0.1} unit={'x'} onChange={(val) => handleConfigChange('svgScale', val)} />
-                    </div>
-
-                    < div className="grid grid-cols-2 gap-4" >
-                        <div className="space-y-1.5" >
-                            <label className="text-xs font-medium text-slate-500 uppercase tracking-wider" > Easing </label>
-                            <select
-                                value={config.easing}
-                                onChange={(e) => handleConfigChange('easing', e.target.value)}
-                                className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                            >
-                                <option value="linear" > Linear </option>
-                                < option value="ease" > Ease </option>
-                                < option value="ease-in" > Ease In </option>
-                                < option value="ease-out" > Ease Out </option>
-                                < option value="ease-in-out" > Ease In Out </option>
-                            </select>
-                        </div>
-
-                        < div className="space-y-1.5" >
-                            <label className="text-xs font-medium text-slate-500 uppercase tracking-wider" > Direction </label>
-                            < select
-                                value={config.direction}
-                                onChange={(e) => handleConfigChange('direction', e.target.value)}
-                                className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                            >
-                                <option value="normal" > Normal </option>
-                                < option value="reverse" > Reverse </option>
-                                < option value="alternate" > Alternate </option>
-                                < option value="alternate-reverse" > Alt Reverse </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    < div className="pt-2 border-t border-slate-100 space-y-2.5" >
-                        <label className="flex items-center justify-between cursor-pointer" >
-                            <span className="text-sm font-medium text-slate-700" > Force Outline Mode </span>
-                            < div className="relative" >
-                                <input
-                                    type="checkbox"
-                                    className="sr-only"
-                                    checked={config.forceOutline}
-                                    onChange={(e) => handleConfigChange('forceOutline', e.target.checked)}
-                                />
-                                < div className={`block w-10 h-6 rounded-full transition-colors ${config.forceOutline ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.forceOutline ? 'transform translate-x-4' : ''}`}> </div>
-                            </div>
-                        </label>
-
-                        <label className="flex items-center justify-between cursor-pointer" >
-                            <span className="text-sm font-medium text-slate-700" > Use Original Fill Colors </span>
-                            < div className="relative" >
-                                <input
-                                    type="checkbox"
-                                    className="sr-only"
-                                    checked={config.useOriginalColor}
-                                    onChange={(e) => handleConfigChange('useOriginalColor', e.target.checked)}
-                                />
-                                < div className={`block w-10 h-6 rounded-full transition-colors ${config.useOriginalColor ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.useOriginalColor ? 'transform translate-x-4' : ''}`}> </div>
-                            </div>
-                        </label>
-
-                        {
-                            config.forceOutline && !config.useOriginalColor && (
-                                <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2" >
-                                    <span className="text-sm text-slate-500" > Stroke Color </span>
-                                    < input
-                                        type="color"
-                                        value={config.strokeColor}
-                                        onChange={(e) => handleConfigChange('strokeColor', e.target.value)
-                                        }
-                                        className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
-                                    />
-                                </div>
-                            )}
-
-                        < div className="pt-2 border-t border-slate-100 space-y-2.5" >
-                            <label className="flex items-center justify-between cursor-pointer" >
-                                <span className="text-sm font-medium text-slate-700" > Show Reference Image </span>
-                                < div className="relative" >
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only"
-                                        checked={config.showOverlay}
-                                        onChange={(e) => handleConfigChange('showOverlay', e.target.checked)}
-                                    />
-                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.showOverlay ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                    < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.showOverlay ? 'transform translate-x-4' : ''}`}> </div>
-                                </div>
-                            </label>
-
-                            {
-                                config.showOverlay && (
-                                    <>
-                                        <div className="space-y-2">
-                                            <NumberInput label="Overlay Opacity" value={config.overlayOpacity} min={0} max={1} step={0.01} onChange={(val) => handleConfigChange('overlayOpacity', val)} />
-                                            <NumberInput label="Overlay Scale" value={config.overlayScale} min={0.1} max={3} step={0.05} onChange={(val) => handleConfigChange('overlayScale', val)} />
-                                        </div>
-
-                                        <div className="space-y-2 pt-1">
-                                            <label className="flex items-center justify-between cursor-pointer" >
-                                                <span className="text-sm font-medium text-slate-700" > Position & Resize Image </span>
-                                                < div className="relative" >
-                                                    <input
-                                                        type="checkbox"
-                                                        className="sr-only"
-                                                        checked={config.isOverlayDraggable}
-                                                        onChange={(e) => handleConfigChange('isOverlayDraggable', e.target.checked)}
-                                                    />
-                                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                                    < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
-                                                </div>
-                                            </label>
-
-                                            <button
-                                                onClick={resetOverlayPosition}
-                                                className="w-full py-1.5 px-3 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
-                                            >
-                                                Reset Position
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                        </div>
-                    </div>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('tracer')}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'tracer' ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Tracer
+                    </button>
                 </div>
+
+                {activeTab === 'animation' ? (
+                    <>
+                        {/* Playback Controls */}
+                        <div className="border-b border-slate-100 pb-4 space-y-4">
+                            <PlaybackControls
+                                isPlaying={isPlaying}
+                                togglePlay={togglePlay}
+                                isRecording={isRecording}
+                                recordingProgress={recordingProgress}
+                                restartAnimation={restartAnimation}
+                                stopAnimation={stopAnimation}
+                                handleRecord={handleRecord}
+                                stopRecording={stopRecording}
+                            />
+
+                            <div className="space-y-1.5 px-1">
+                                <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                                    <span>Progress</span>
+                                    <span>{currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={totalDuration || 1}
+                                    step={0.01}
+                                    value={currentTime}
+                                    onChange={(e) => {
+                                        setIsPlaying(false);
+                                        setIsStopped(false);
+                                        setCurrentTime(parseFloat(e.target.value));
+                                    }}
+                                    className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Upload Section */}
+                        <div className="space-y-2 border-b border-slate-100 pb-4" >
+                            <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
+                                <label
+                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group"
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={handleSvgDrop}
+                                >
+                                    <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
+                                    <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
+                                        Load SVG
+                                    </span>
+                                    < input
+                                        type="file"
+                                        accept=".svg"
+                                        className="hidden"
+                                        onChange={handleFileUpload}
+                                    />
+                                </label>
+
+                                < label
+                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={handleImageDrop}
+                                >
+                                    <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
+                                    <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
+                                        Ref Image
+                                    </span>
+                                    < input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleImageUpload}
+                                    />
+                                </label>
+                            </div>
+
+                            {/* Toolkit Section */}
+                            <div className="pt-2">
+                                <div className="flex items-center gap-2 text-slate-800 font-semibold mb-3 px-1" >
+                                    <Wrench className="w-4 h-4 text-indigo-500" />
+                                    Toolkit
+                                </div>
+                                <div className="flex flex-row flex-wrap gap-1.5">
+                                    <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
+                                    <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="Image VTracer" />
+                                    <ToolkitLink href="https://editor.graphite.art/" label="Graphite Editor" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Configuration */}
+                        <div className="space-y-3" >
+                            <div className="flex items-center gap-2 text-slate-800 font-semibold border-b border-slate-100 pb-1.5" >
+                                <Settings2 className="w-4 h-4" />
+                                Animation
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <NumberInput label="Duration" value={config.duration} min={0.1} max={10} step={0.1} unit="s" onChange={(val) => handleConfigChange('duration', val)} />
+                                <NumberInput label="Stagger Step" value={config.stagger} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('stagger', val)} />
+                                <NumberInput label="Initial Delay" value={config.delay} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('delay', val)} />
+                                <NumberInput label="Stroke Width" value={config.strokeWidth} min={0.1} max={20} step={0.1} unit="px" onChange={(val) => handleConfigChange('strokeWidth', val)} />
+                                <NumberInput label="SVG Scale" value={config.svgScale} min={0.1} max={5} step={0.1} unit={'x'} onChange={(val) => handleConfigChange('svgScale', val)} />
+                            </div>
+
+                            < div className="grid grid-cols-2 gap-4" >
+                                <div className="space-y-1.5" >
+                                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wider" > Easing </label>
+                                    <select
+                                        value={config.easing}
+                                        onChange={(e) => handleConfigChange('easing', e.target.value)}
+                                        className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    >
+                                        <option value="linear" > Linear </option>
+                                        < option value="ease" > Ease </option>
+                                        < option value="ease-in" > Ease In </option>
+                                        < option value="ease-out" > Ease Out </option>
+                                        < option value="ease-in-out" > Ease In Out </option>
+                                    </select>
+                                </div>
+
+                                < div className="space-y-1.5" >
+                                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wider" > Direction </label>
+                                    < select
+                                        value={config.direction}
+                                        onChange={(e) => handleConfigChange('direction', e.target.value)}
+                                        className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    >
+                                        <option value="normal" > Normal </option>
+                                        < option value="reverse" > Reverse </option>
+                                        < option value="alternate" > Alternate </option>
+                                        < option value="alternate-reverse" > Alt Reverse </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            < div className="pt-2 border-t border-slate-100 space-y-2.5" >
+                                <label className="flex items-center justify-between cursor-pointer" >
+                                    <span className="text-sm font-medium text-slate-700" > Force Outline Mode </span>
+                                    < div className="relative" >
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only"
+                                            checked={config.forceOutline}
+                                            onChange={(e) => handleConfigChange('forceOutline', e.target.checked)}
+                                        />
+                                        < div className={`block w-10 h-6 rounded-full transition-colors ${config.forceOutline ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                        < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.forceOutline ? 'transform translate-x-4' : ''}`}> </div>
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center justify-between cursor-pointer" >
+                                    <span className="text-sm font-medium text-slate-700" > Use Original Fill Colors </span>
+                                    < div className="relative" >
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only"
+                                            checked={config.useOriginalColor}
+                                            onChange={(e) => handleConfigChange('useOriginalColor', e.target.checked)}
+                                        />
+                                        < div className={`block w-10 h-6 rounded-full transition-colors ${config.useOriginalColor ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                        < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.useOriginalColor ? 'transform translate-x-4' : ''}`}> </div>
+                                    </div>
+                                </label>
+
+                                {
+                                    config.forceOutline && !config.useOriginalColor && (
+                                        <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2" >
+                                            <span className="text-sm text-slate-500" > Stroke Color </span>
+                                            < input
+                                                type="color"
+                                                value={config.strokeColor}
+                                                onChange={(e) => handleConfigChange('strokeColor', e.target.value)
+                                                }
+                                                className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
+                                            />
+                                        </div>
+                                    )}
+
+                                < div className="pt-2 border-t border-slate-100 space-y-2.5" >
+                                    <label className="flex items-center justify-between cursor-pointer" >
+                                        <span className="text-sm font-medium text-slate-700" > Show Reference Image </span>
+                                        < div className="relative" >
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                checked={config.showOverlay}
+                                                onChange={(e) => handleConfigChange('showOverlay', e.target.checked)}
+                                            />
+                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.showOverlay ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                            < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.showOverlay ? 'transform translate-x-4' : ''}`}> </div>
+                                        </div>
+                                    </label>
+
+                                    {
+                                        config.showOverlay && (
+                                            <>
+                                                <div className="space-y-2">
+                                                    <NumberInput label="Overlay Opacity" value={config.overlayOpacity} min={0} max={1} step={0.01} onChange={(val) => handleConfigChange('overlayOpacity', val)} />
+                                                    <NumberInput label="Overlay Scale" value={config.overlayScale} min={0.1} max={3} step={0.05} onChange={(val) => handleConfigChange('overlayScale', val)} />
+                                                </div>
+
+                                                <div className="space-y-2 pt-1">
+                                                    <label className="flex items-center justify-between cursor-pointer" >
+                                                        <span className="text-sm font-medium text-slate-700" > Position & Resize Image </span>
+                                                        < div className="relative" >
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only"
+                                                                checked={config.isOverlayDraggable}
+                                                                onChange={(e) => handleConfigChange('isOverlayDraggable', e.target.checked)}
+                                                            />
+                                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                                            < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
+                                                        </div>
+                                                    </label>
+
+                                                    <button
+                                                        onClick={resetOverlayPosition}
+                                                        className="w-full py-1.5 px-3 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
+                                                    >
+                                                        Reset Position
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <ImageTracer
+                        onApplySvg={handleOnApplyTracedSvg}
+                    />
+                )}
             </aside>
 
             {/* Main Preview Area */}

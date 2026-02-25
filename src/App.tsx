@@ -3,7 +3,9 @@ import SvgTracer from "./pages/SvgTracer";
 
 export function App() {
   return (
-    <SvgTracer />
+    <>
+      <SvgTracer />
+    </>
   );
 }
 

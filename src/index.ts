@@ -4,7 +4,17 @@ import index from "./index.html";
 const server = serve({
   routes: {
     // Serve index.html for all unmatched routes.
-    "/*": index,
+    "/": index,
+    // serve all files in public directory
+    "/*": async (req) => {
+      const path = new URL(req.url).pathname;
+      const file = Bun.file(`./public${path}`);
+      if (await file.exists()) {
+        return new Response(file);
+      }
+      // Fallback to index.html for SPA routing
+      return new Response(Bun.file("./src/index.html"));
+    },
 
     "/api/hello": {
       async GET() {
