@@ -17,17 +17,19 @@ interface VTracerConfig {
 
 interface ImageTracerProps {
     onApplySvg: (svgContent: string) => void;
+    vTracerCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+    vTracerSvgRef: React.RefObject<SVGSVGElement | null>;
 }
 
 export const ImageTracer: React.FC<ImageTracerProps> = ({
-    onApplySvg
+    onApplySvg,
+    vTracerCanvasRef,
+    vTracerSvgRef
 }) => {
     const [sourceImage, setSourceImage] = useState<string | null>(null);
     const [isTracing, setIsTracing] = useState(false);
     const [traceProgress, setTraceProgress] = useState(0);
     const [tracedSvgContent, setTracedSvgContent] = useState<string | null>(null);
-    const vTracerCanvasRef = useRef<HTMLCanvasElement>(null);
-    const vTracerSvgRef = useRef<SVGSVGElement>(null);
 
     const handleInternalImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -288,9 +290,6 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                 </div>
             </div>
 
-            {/* Hidden internal elements for VTracer */}
-            <canvas id="vtracer-canvas-internal" ref={vTracerCanvasRef} style={{ display: 'none' }} />
-            <svg id="vtracer-svg-internal" ref={vTracerSvgRef} style={{ display: 'none' }} xmlns="http://www.w3.org/2000/svg" />
         </div>
     );
 };

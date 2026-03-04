@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Comment Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .custom-shadow {
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .form-container::-webkit-scrollbar-thumb {
+            background-color: #e5e7eb;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 md:p-10">
+
+    <div
+        class="bg-white rounded-3xl border border-gray-100 custom-shadow w-full max-w-5xl flex flex-col md:flex-row overflow-hidden h-auto md:min-h-[70vh]">
+
+        <!-- Left Side: Controls -->
+        <div class="w-full md:w-[45%] p-6 md:p-8 space-y-5 overflow-y-auto form-container border-r border-gray-50">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-900">Comment Editor</h2>
+                <button id="randomize-all-btn"
+                    class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">
+                    Randomize All
+                </button>
+            </div>
+
+            <!-- Picture Section -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Picture</label>
+                <div class="flex items-center gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                    <div class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                        <img id="pfp-preview-input" src="https://i.pravatar.cc/150?u=rourke" alt="Avatar"
+                            class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="upload-pfp"
+                            class="cursor-pointer px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-white border border-indigo-100 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                            Upload
+                        </label>
+                        <input type="file" id="upload-pfp" class="hidden" accept="image/*">
+                        <button id="randomize-btn"
+                            class="px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                            Randomize
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Username -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Username</label>
+                <input type="text" id="username-input" value="rourke" maxlength="30"
+                    class="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all">
+            </div>
+
+            <!-- Comment -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Comment</label>
+                <textarea id="comment-input" rows="3"
+                    class="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all resize-none">We've been waiting for this for a LONG time!</textarea>
+            </div>
+
+            <!-- Likes & Theme -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Likes
+                        Text</label>
+                    <input type="text" id="likes-input" value="85 likes"
+                        class="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Theme</label>
+                    <select id="theme-input"
+                        class="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm appearance-none cursor-pointer">
+                        <option value="dark">Dark Mode</option>
+                        <option value="light">Light Mode</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Live Preview -->
+        <div class="w-full md:w-[55%] bg-[#f8fafc] p-6 md:p-12 flex flex-col items-center justify-center relative">
+
+            <!-- Floating Controls -->
+            <div class="absolute top-6 right-6 flex gap-2">
+                <button id="reset-btn"
+                    class="px-4 py-1.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest">
+                    Reset
+                </button>
+                <button id="download-btn"
+                    class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95">
+                    DOWNLOAD PNG
+                </button>
+            </div>
+
+            <!-- Simplified Instagram Comment Component -->
+            <div id="preview-container"
+                class="bg-black text-white w-full max-w-md p-6 transition-all duration-300 rounded-2xl shadow-2xl">
+                <div class="flex gap-4 items-start">
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0">
+                        <img id="pfp-preview-card" src="https://i.pravatar.cc/150?u=rourke"
+                            class="w-9 h-9 rounded-full object-cover">
+                    </div>
+
+                    <!-- Content Wrapper -->
+                    <div class="flex flex-grow justify-between items-start gap-2">
+                        <!-- Text Content -->
+                        <div class="flex flex-col flex-grow">
+                            <span id="username-display" class="font-bold text-sm">rourke</span>
+                            <p id="comment-display" class="text-sm font-normal break-words mt-0.5 leading-snug">We've
+                                been waiting for this for a LONG time!</p>
+
+                            <!-- Simple Action Row -->
+                            <div class="flex items-center gap-5 mt-2.5 text-xs font-semibold text-gray-400">
+                                <span id="likes-display">85 likes</span>
+                                <button class="hover:text-gray-200 transition-colors">Reply</button>
+                            </div>
+                        </div>
+
+                        <!-- Heart Button -->
+                        <div class="flex-shrink-0 pt-1">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-red-500 cursor-pointer transition-colors"
+                                fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mt-8 text-gray-400 text-[10px] uppercase tracking-[0.2em] font-bold">Live Preview</p>
+        </div>
+    </div>
+
+    <script>
+        const usernameInput = document.getElementById('username-input');
+        const commentInput = document.getElementById('comment-input');
+        const likesInput = document.getElementById('likes-input');
+        const themeInput = document.getElementById('theme-input');
+        const uploadPfp = document.getElementById('upload-pfp');
+
+        const previewContainer = document.getElementById('preview-container');
+        const usernameDisplay = document.getElementById('username-display');
+        const commentDisplay = document.getElementById('comment-display');
+        const likesDisplay = document.getElementById('likes-display');
+        const pfpPreviewInput = document.getElementById('pfp-preview-input');
+        const pfpPreviewCard = document.getElementById('pfp-preview-card');
+
+        const randomizeBtn = document.getElementById('randomize-btn');
+        const randomizeAllBtn = document.getElementById('randomize-all-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const downloadBtn = document.getElementById('download-btn');
+
+        const USERNAMES = [
+            'alex_j', 'sarah_m', 'mike_d', 'jane_doe', 'cool_kid_99', 'tech_guru', 'nature_lover',
+            'creative_mind', 'pixel_perfect', 'daily_dose', 'vibe_check', 'neon_dreamer',
+            'silent_echo', 'urban_explorer', 'minimal_life', 'dreamy_eyes', 'lost_in_space',
+            'mountain_hike', 'camera_ready', 'ocean_breeze', 'wild_soul', 'retro_vibe'
+        ];
+
+        const COMMENTS = [
+            'This is exactly what I needed today! 🙌',
+            'Love the vibes here! ✨',
+            'Absolutely stunning. Can\'t wait for more!',
+            'The details are incredible. Great work!',
+            'Is it just me or is this perfect? 💯',
+            'Keep it up, you\'re killing it! 🔥',
+            'Finally some good content on my feed.',
+            'This deserves way more attention!',
+            'Lowkey obsessed with this style. 😍',
+            'Straight fire!! 🚀'
+        ];
+
+        let currentObjectURL = null;
+
+        const cleanupObjectURL = () => {
+            if (currentObjectURL) {
+                URL.revokeObjectURL(currentObjectURL);
+                currentObjectURL = null;
+            }
+        };
+
+        const setPfpFromUrl = async (url) => {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                cleanupObjectURL();
+                currentObjectURL = URL.createObjectURL(blob);
+
+                pfpPreviewInput.src = currentObjectURL;
+                pfpPreviewCard.src = currentObjectURL;
+            } catch (error) {
+                console.error("Failed to load image as blob", error);
+                // Fallback to direct URL if fetch fails (CORS)
+                pfpPreviewInput.src = url;
+                pfpPreviewCard.src = url;
+            }
+        };
+
+        const updatePreview = () => {
+            usernameDisplay.textContent = usernameInput.value || 'username';
+            commentDisplay.textContent = commentInput.value || '';
+            likesDisplay.textContent = likesInput.value || '0 likes';
+
+            if (themeInput.value === 'dark') {
+                previewContainer.classList.remove('bg-white', 'text-black');
+                previewContainer.classList.add('bg-black', 'text-white');
+                likesDisplay.parentElement.classList.replace('text-gray-500', 'text-gray-400');
+            } else {
+                previewContainer.classList.remove('bg-black', 'text-white');
+                previewContainer.classList.add('bg-white', 'text-black');
+                likesDisplay.parentElement.classList.replace('text-gray-400', 'text-gray-500');
+            }
+        };
+
+        [usernameInput, commentInput, likesInput, themeInput].forEach(el => {
+            el.addEventListener('input', updatePreview);
+        });
+
+        uploadPfp.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                cleanupObjectURL();
+                currentObjectURL = URL.createObjectURL(file);
+                pfpPreviewInput.src = currentObjectURL;
+                pfpPreviewCard.src = currentObjectURL;
+            }
+        });
+
+        const randomizeProfile = () => {
+            const randomId = Math.floor(Math.random() * 5000);
+            const newUrl = `https://i.pravatar.cc/150?u=${randomId}`;
+            return setPfpFromUrl(newUrl);
+        };
+
+        const randomizeUsername = () => {
+            const randomUser = USERNAMES[Math.floor(Math.random() * USERNAMES.length)];
+            usernameInput.value = randomUser;
+        };
+
+        const randomizeLikes = () => {
+            const likesCount = Math.floor(Math.random() * 99) + 1;
+            likesInput.value = likesCount + ' likes';
+        };
+
+        const randomizeComment = () => {
+            const randomComment = COMMENTS[Math.floor(Math.random() * COMMENTS.length)];
+            commentInput.value = randomComment;
+        };
+
+        randomizeBtn.addEventListener('click', randomizeProfile);
+
+        randomizeAllBtn.addEventListener('click', () => {
+            randomizeProfile();
+            randomizeUsername();
+            randomizeLikes();
+            randomizeComment();
+            updatePreview();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            usernameInput.value = 'rourke';
+            commentInput.value = "We've been waiting for this for a LONG time!";
+            likesInput.value = '85 likes';
+            themeInput.value = 'dark';
+            setPfpFromUrl("https://i.pravatar.cc/150?u=rourke");
+            updatePreview();
+        });
+
+        // Functional Download Logic
+        downloadBtn.addEventListener('click', () => {
+            const originalBtnText = downloadBtn.innerText;
+            downloadBtn.innerText = "GENERATING...";
+            downloadBtn.disabled = true;
+
+            html2canvas(previewContainer, {
+                backgroundColor: null,
+                scale: 3,
+                useCORS: true,
+                logging: false,
+                borderRadius: 16
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `instagram-comment-${usernameInput.value || 'user'}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                downloadBtn.innerText = originalBtnText;
+                downloadBtn.disabled = false;
+            }).catch(err => {
+                console.error("Download failed", err);
+                downloadBtn.innerText = "ERROR";
+                setTimeout(() => {
+                    downloadBtn.innerText = originalBtnText;
+                    downloadBtn.disabled = false;
+                }, 2000);
+            });
+        });
+
+        // Initial load
+        setPfpFromUrl("https://i.pravatar.cc/150?u=rourke");
+        updatePreview();
+    </script>
+</body>
+
+</html>

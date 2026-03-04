@@ -31,6 +31,8 @@ export default function SvgTracer() {
     const [totalDuration, setTotalDuration] = useState<number>(0);
     const svgContainerRef = useRef<HTMLDivElement>(null);
     const previewAreaRef = useRef<HTMLDivElement>(null);
+    const vTracerCanvasRef = useRef<HTMLCanvasElement>(null);
+    const vTracerSvgRef = useRef<SVGSVGElement>(null);
 
     // Configuration state
     const [config, setConfig] = useState<TracerConfig>({
@@ -47,7 +49,8 @@ export default function SvgTracer() {
         overlayOpacity: 0.3,
         isOverlayDraggable: false,
         overlayScale: 1,
-        svgScale: 1
+        svgScale: 1,
+        backgroundColor: '#ffffffcc'
     });
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -683,11 +686,48 @@ export default function SvgTracer() {
                                         )}
                                 </div>
                             </div>
+
+                            <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-slate-700">Container Background</span>
+                                    <input
+                                        type="color"
+                                        value={config.backgroundColor.slice(0, 7)}
+                                        onChange={(e) => {
+                                            const opacity = Math.round(parseFloat(config.backgroundColor.slice(7, 9) || 'ff') / 2.55);
+                                            const hex = e.target.value;
+                                            handleConfigChange('backgroundColor', hex + (config.backgroundColor.slice(7, 9) || 'cc'));
+                                        }}
+                                        className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                                        <span>Opacity</span>
+                                        <span>{Math.round((parseInt(config.backgroundColor.slice(7, 9) || 'cc', 16) / 255) * 100)}%</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="255"
+                                        step="1"
+                                        value={parseInt(config.backgroundColor.slice(7, 9) || 'cc', 16)}
+                                        onChange={(e) => {
+                                            const opacity = parseInt(e.target.value).toString(16).padStart(2, '0');
+                                            const color = config.backgroundColor.slice(0, 7);
+                                            handleConfigChange('backgroundColor', color + opacity);
+                                        }}
+                                        className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </>
                 ) : (
                     <ImageTracer
                         onApplySvg={handleOnApplyTracedSvg}
+                        vTracerCanvasRef={vTracerCanvasRef}
+                        vTracerSvgRef={vTracerSvgRef}
                     />
                 )}
             </aside>
@@ -714,7 +754,8 @@ export default function SvgTracer() {
                     onTouchCancel={handleEnd}
                 >
                     <div
-                        className="w-full max-w-2xl aspect-square flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 transition-all relative"
+                        className="w-full max-w-2xl aspect-square flex items-center justify-center border border-white/50 p-8 transition-all relative"
+                        style={{ backgroundColor: config.backgroundColor }}
                     >
                         {/* Reference Image Overlay */}
                         {overlayImage && config.showOverlay && (
@@ -748,15 +789,38 @@ export default function SvgTracer() {
                             </div>
                         )}
 
-                        < div
-                            key={animationKey}
-                            ref={svgContainerRef}
-                            className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''} ${config.isOverlayDraggable ? 'pointer-events-none' : ''}`}
-                            style={{ transform: `scale(${config.svgScale})` }}
-                            // We use dangerouslySetInnerHTML to inject the raw SVG. The key prop forces React to completely destroy and recreate this DOM node when animationKey changes, ensuring CSS animations restart cleanly.
-                            dangerouslySetInnerHTML={{ __html: svgContent }}
-                        />
-
+                        {activeTab === 'animation' ? (
+                            < div
+                                key={animationKey}
+                                ref={svgContainerRef}
+                                className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''} ${config.isOverlayDraggable ? 'pointer-events-none' : ''}`}
+                                style={{ transform: `scale(${config.svgScale})` }}
+                                dangerouslySetInnerHTML={{ __html: svgContent }}
+                            />
+                        ) : (
+                            <div className="absolute w-full h-full flex items-center justify-center bg-slate-100/50 rounded-lg border border-slate-200">
+                                <canvas id="vtracer-canvas-internal" ref={vTracerCanvasRef} className="max-w-full max-h-full " />
+                                <style>
+                                    {`#vtracer-svg-internal, #vtracer-canvas-internal {
+                                        position: absolute;
+                                        width: 100%;
+                                        margin-bottom: 50px;
+                                        
+                                    }
+                                    
+                                    #vtracer-svg-internal > path:hover {
+                                        stroke: #ff0;
+                                    }
+                                    `}
+                                </style>
+                                <svg
+                                    id="vtracer-svg-internal"
+                                    ref={vTracerSvgRef}
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="absolute inset-0 w-full h-full"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

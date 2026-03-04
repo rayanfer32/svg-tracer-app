@@ -13,4 +13,5 @@ export interface TracerConfig {
     isOverlayDraggable: boolean;
     overlayScale: number;
     svgScale: number;
+    backgroundColor: string;
 }
