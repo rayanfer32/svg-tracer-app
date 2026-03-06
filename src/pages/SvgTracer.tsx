@@ -5,24 +5,33 @@ import { useTracerStore } from '../store/useTracerStore';
 import { easeFunctions } from '../utils/constants';
 
 export default function SvgTracer() {
-    const {
-        activeTab,
-        svgContent,
-        overlayImage,
-        overlayPos, setOverlayPos,
-        isDragging, setIsDragging,
-        isResizing, setIsResizing,
-        dragStart, setDragStart,
-        resizeStart, setResizeStart,
-        isPlaying, setIsPlaying,
-        isStopped, setIsStopped,
-        isRecording, setIsRecording,
-        recordingProgress, setRecordingProgress,
-        animationKey,
-        currentTime, setCurrentTime,
-        totalDuration, setTotalDuration,
-        config, updateConfig,
-    } = useTracerStore();
+    // Use selectors to avoid re-rendering on every store update (especially currentTime)
+    const activeTab = useTracerStore(s => s.activeTab);
+    const svgContent = useTracerStore(s => s.svgContent);
+    const overlayImage = useTracerStore(s => s.overlayImage);
+    const overlayPos = useTracerStore(s => s.overlayPos);
+    const setOverlayPos = useTracerStore(s => s.setOverlayPos);
+    const isDragging = useTracerStore(s => s.isDragging);
+    const setIsDragging = useTracerStore(s => s.setIsDragging);
+    const isResizing = useTracerStore(s => s.isResizing);
+    const setIsResizing = useTracerStore(s => s.setIsResizing);
+    const dragStart = useTracerStore(s => s.dragStart);
+    const setDragStart = useTracerStore(s => s.setDragStart);
+    const resizeStart = useTracerStore(s => s.resizeStart);
+    const setResizeStart = useTracerStore(s => s.setResizeStart);
+    const isPlaying = useTracerStore(s => s.isPlaying);
+    const setIsPlaying = useTracerStore(s => s.setIsPlaying);
+    const isStopped = useTracerStore(s => s.isStopped);
+    const setIsStopped = useTracerStore(s => s.setIsStopped);
+    const isRecording = useTracerStore(s => s.isRecording);
+    const setIsRecording = useTracerStore(s => s.setIsRecording);
+    const setRecordingProgress = useTracerStore(s => s.setRecordingProgress);
+    const animationKey = useTracerStore(s => s.animationKey);
+    const setCurrentTime = useTracerStore(s => s.setCurrentTime);
+    const totalDuration = useTracerStore(s => s.totalDuration);
+    const setTotalDuration = useTracerStore(s => s.setTotalDuration);
+    const config = useTracerStore(s => s.config);
+    const updateConfig = useTracerStore(s => s.updateConfig);
 
     const isRecordingRef = useRef<boolean>(false);
     const svgContainerRef = useRef<HTMLDivElement>(null);
@@ -30,11 +39,10 @@ export default function SvgTracer() {
     const vTracerCanvasRef = useRef<HTMLCanvasElement>(null);
     const vTracerSvgRef = useRef<SVGSVGElement>(null);
 
-    // Ref to track state for the stable animation loop
+    // Ref to track state for the stable animation loop without causing re-renders
     const loopStateRef = useRef({
         isPlaying,
         isStopped,
-        currentTime,
         totalDuration,
         config,
         isRecording
@@ -45,12 +53,11 @@ export default function SvgTracer() {
         loopStateRef.current = {
             isPlaying,
             isStopped,
-            currentTime,
             totalDuration,
             config,
             isRecording
         };
-    }, [isPlaying, isStopped, currentTime, totalDuration, config, isRecording]);
+    }, [isPlaying, isStopped, totalDuration, config, isRecording]);
 
     // Update total duration when SVG or timing config changes
     useEffect(() => {
@@ -252,17 +259,29 @@ export default function SvgTracer() {
     }, [config.delay, config.stagger, config.duration, config.easing, config.useOriginalColor]);
 
     // Effect for manual scrubbing / initial render
+    // We subscribe manually to currentTime here to avoid re-rendering the whole component
     useEffect(() => {
-        if (!isPlaying || isStopped) {
-            renderFrame(currentTime);
-        }
-    }, [currentTime, isPlaying, isStopped, renderFrame, animationKey]);
+        // Render initial frame
+        renderFrame(useTracerStore.getState().currentTime);
+
+        const unsub = useTracerStore.subscribe(
+            (state) => state.currentTime,
+            (time) => {
+                const s = useTracerStore.getState();
+                if (!s.isPlaying || s.isStopped) {
+                    renderFrame(time);
+                }
+            }
+        );
+        return unsub;
+    }, [renderFrame, animationKey, svgContent]);
 
     useEffect(() => {
         if (isRecording || !isPlaying || isStopped) return;
         let rafId: number;
         let lastTime = performance.now();
-        let loopTime = currentTime;
+        const currentStartTime = useTracerStore.getState().currentTime;
+        let loopTime = currentStartTime;
         let lastStoreUpdateTime = 0;
 
         const update = (now: number) => {
@@ -285,13 +304,7 @@ export default function SvgTracer() {
             // Render to DOM every frame for smoothness
             renderFrame(loopTime);
 
-            // Throttle store updates to reduce React re-renders during playback
-            // This prevents SvgTracer from re-rendering 60fps while playing
-            if (now - lastStoreUpdateTime > 400) {
-                lastStoreUpdateTime = now;
-                setCurrentTime(loopTime);
-            }
-
+            setCurrentTime(loopTime);
             rafId = requestAnimationFrame(update);
         };
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 import type { TracerConfig } from '../types';
 import { DEFAULT_SVG } from '../utils/constants';
 
@@ -73,7 +74,7 @@ const initialConfig: TracerConfig = {
     limitOverlayScale: 3
 };
 
-export const useTracerStore = create<TracerState>((set) => ({
+export const useTracerStore = create<TracerState>()(subscribeWithSelector((set) => ({
     // UI State
     activeTab: 'animation',
     setActiveTab: (tab) => set({ activeTab: tab }),
@@ -141,4 +142,4 @@ export const useTracerStore = create<TracerState>((set) => ({
         isPlaying: true,
         isStopped: false
     })),
-}));
+})));
