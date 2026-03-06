@@ -1,164 +1,66 @@
-import {
-    Upload, Settings2,
-    Image as ImageIcon, MousePointerClick, Wrench
-} from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { toCanvas } from 'html-to-image';
-import type { TracerConfig } from '../types';
-import { DEFAULT_SVG, easeFunctions } from '../utils/constants';
-import { NumberInput } from '../components/NumberInput';
-import { ToolkitLink } from '../components/ToolkitLink';
-import { PlaybackControls } from '../components/PlaybackControls';
-import { ImageTracer } from '../components/ImageTracer';
+import { Sidebar } from '../components/Sidebar';
+import { useTracerStore } from '../store/useTracerStore';
+import { easeFunctions } from '../utils/constants';
+import { CloudCog } from 'lucide-react';
 
 export default function SvgTracer() {
-    const [activeTab, setActiveTab] = useState<'animation' | 'tracer'>('animation');
-    const [svgContent, setSvgContent] = useState<string>(DEFAULT_SVG);
-    const [overlayImage, setOverlayImage] = useState<string | null>(null);
-    const [overlayPos, setOverlayPos] = useState({ x: 0, y: 0 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [isResizing, setIsResizing] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, scale: 1 });
-    const [isPlaying, setIsPlaying] = useState<boolean>(true);
-    const [isStopped, setIsStopped] = useState<boolean>(false);
-    const [isRecording, setIsRecording] = useState<boolean>(false);
+    const {
+        activeTab,
+        svgContent,
+        overlayImage,
+        overlayPos, setOverlayPos,
+        isDragging, setIsDragging,
+        isResizing, setIsResizing,
+        dragStart, setDragStart,
+        resizeStart, setResizeStart,
+        isPlaying, setIsPlaying,
+        isStopped, setIsStopped,
+        isRecording, setIsRecording,
+        recordingProgress, setRecordingProgress,
+        animationKey,
+        currentTime, setCurrentTime,
+        totalDuration, setTotalDuration,
+        config, updateConfig,
+    } = useTracerStore();
+
     const isRecordingRef = useRef<boolean>(false);
-    const [shouldStopRecording, setShouldStopRecording] = useState<boolean>(false);
-    const [recordingProgress, setRecordingProgress] = useState<number>(0);
-    const [animationKey, setAnimationKey] = useState<number>(0); // Used to force re-render and restart animation
-    const [currentTime, setCurrentTime] = useState<number>(0);
-    const [totalDuration, setTotalDuration] = useState<number>(0);
     const svgContainerRef = useRef<HTMLDivElement>(null);
     const previewAreaRef = useRef<HTMLDivElement>(null);
     const vTracerCanvasRef = useRef<HTMLCanvasElement>(null);
     const vTracerSvgRef = useRef<SVGSVGElement>(null);
 
-    // Configuration state
-    const [config, setConfig] = useState<TracerConfig>({
-        duration: 1.8,
-        stagger: 2,
-        delay: 2,
-        easing: 'linear',
-        direction: 'normal',
-        forceOutline: true,
-        useOriginalColor: true,
-        strokeColor: '#3b82f6', // blue-500
-        strokeWidth: 0.5,
-        showOverlay: true,
-        overlayOpacity: 0.3,
-        isOverlayDraggable: false,
-        overlayScale: 1,
-        svgScale: 1,
-        backgroundColor: '#ffffffcc'
+    // Ref to track state for the stable animation loop
+    const loopStateRef = useRef({
+        isPlaying,
+        isStopped,
+        currentTime,
+        totalDuration,
+        config,
+        isRecording
     });
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file && file.type === 'image/svg+xml') {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = e.target?.result;
-                if (typeof content === 'string') {
-                    setSvgContent(content);
-                    setAnimationKey(prev => prev + 1); // Restart animation on new file
-                }
-            };
-            reader.readAsText(file);
-        } else {
-            alert("Please upload a valid SVG file.");
-        }
-    };
+    // Update ref whenever state changes
+    useEffect(() => {
+        loopStateRef.current = {
+            isPlaying,
+            isStopped,
+            currentTime,
+            totalDuration,
+            config,
+            isRecording
+        };
+    }, [isPlaying, isStopped, currentTime, totalDuration, config, isRecording]);
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = e.target?.result;
-                if (typeof content === 'string') {
-                    setOverlayImage(content);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleSvgDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (file && file.type === 'image/svg+xml') {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const content = ev.target?.result;
-                if (typeof content === 'string') {
-                    setSvgContent(content);
-                    setAnimationKey(prev => prev + 1);
-                }
-            };
-            reader.readAsText(file);
-        } else {
-            alert("Please drop a valid SVG file.");
-        }
-    };
-
-    const handleImageDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const content = ev.target?.result;
-                if (typeof content === 'string') {
-                    setOverlayImage(content);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleConfigChange = <T extends keyof TracerConfig>(key: T, value: TracerConfig[T]) => {
-        setConfig(prev => ({ ...prev, [key]: value }));
-        // Auto-restart animation when config changes for better UX
-        setIsStopped(false);
-        setAnimationKey(prev => prev + 1);
-        setIsPlaying(true);
-    };
-
-    const handleOnApplyTracedSvg = (newSvg: string) => {
-        setSvgContent(newSvg);
-        setAnimationKey(prev => prev + 1);
-        setActiveTab('animation');
-    };
-
-    const restartAnimation = () => {
-        setIsStopped(false);
-        setAnimationKey(prev => prev + 1);
-        setCurrentTime(0);
-        setIsPlaying(true);
-    };
-
-    const stopAnimation = () => {
-        setIsStopped(true);
-        setIsPlaying(false);
-        // Set to end of animation
+    // Update total duration when SVG or timing config changes
+    useEffect(() => {
         const elements = svgContainerRef.current?.querySelectorAll(
             'path, circle, rect, line, polyline, polygon, ellipse'
         ) || [];
         const duration = config.delay + (elements.length * config.stagger) + config.duration;
-        setCurrentTime(duration);
-    };
-
-    const togglePlay = () => {
-        if (isStopped) {
-            setIsStopped(false);
-            setAnimationKey(prev => prev + 1);
-            setIsPlaying(true);
-            setCurrentTime(0);
-        } else {
-            setIsPlaying(!isPlaying);
-        }
-    };
+        setTotalDuration(duration);
+    }, [svgContent, config.delay, config.stagger, config.duration]);
 
     const getEventPoint = (e: React.MouseEvent | React.TouchEvent) => {
         if ('touches' in e) {
@@ -195,9 +97,8 @@ export default function SvgTracer() {
             });
         } else if (isResizing) {
             const dx = p.x - resizeStart.x;
-            // Scale dynamically (dx moves right to scale up, left to scale down)
             const newScale = Math.max(0.1, resizeStart.scale + dx * 0.005);
-            handleConfigChange('overlayScale', newScale);
+            updateConfig('overlayScale', newScale);
         }
     };
 
@@ -206,134 +107,12 @@ export default function SvgTracer() {
         setIsResizing(false);
     };
 
-    const resetOverlayPosition = () => {
-        setOverlayPos({ x: 0, y: 0 });
-        handleConfigChange('overlayScale', 1);
-    };
-
-    const handleRecord = async () => {
-        if (!previewAreaRef.current || isRecording) return;
-
-        try {
-            isRecordingRef.current = true;
-            setIsRecording(true);
-            setIsPlaying(false); // Stop real-time playback
-            setRecordingProgress(0);
-            (window as any).__stopRecording = false;
-
-            const elements = svgContainerRef.current?.querySelectorAll(
-                'path, circle, rect, line, polyline, polygon, ellipse'
-            ) || [];
-
-            // Pre-calculate lengths
-            const elementData = Array.from(elements).map(el => ({
-                el: el as SVGElement,
-                length: (el as unknown as SVGGeometryElement).getTotalLength?.() || 0
-            }));
-
-            const totalDurationSec = config.delay + (elements.length * config.stagger) + config.duration;
-            const fps = 30;
-            const totalFrames = Math.ceil(totalDurationSec * fps);
-
-            // Setup recording canvas
-            const element = previewAreaRef.current;
-            const captureCanvas = document.createElement('canvas');
-            const stream = captureCanvas.captureStream(fps);
-            const recorder = new MediaRecorder(stream, {
-                mimeType: 'video/webm;codecs=vp9',
-                videoBitsPerSecond: 8000000 // 8Mbps
-            });
-
-            const chunks: Blob[] = [];
-            recorder.ondataavailable = (e) => chunks.push(e.data);
-            recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `svg-animation-${Date.now()}.webm`;
-                a.click();
-                URL.revokeObjectURL(url);
-                isRecordingRef.current = false;
-                setIsRecording(false);
-                setIsPlaying(true); // Resume normal UI
-            };
-
-            recorder.start();
-
-            const ease = (t: number) => {
-                const fn = easeFunctions[config.easing] || easeFunctions['linear'];
-                return fn ? fn(t) : t;
-            };
-
-            // Frame-perfect render loop
-            for (let frame = 0; frame <= totalFrames; frame++) {
-                if ((window as any).__stopRecording) break;
-                const currentTime = frame / fps;
-                setRecordingProgress(frame / totalFrames);
-
-                // Re-query elements in case React detached/re-rendered them
-                const currentElements = svgContainerRef.current?.querySelectorAll(
-                    'path, circle, rect, line, polyline, polygon, ellipse'
-                ) || [];
-
-                // Manually position all paths for this specific point in time
-                Array.from(currentElements).forEach((el, index) => {
-                    const geometryEl = el as unknown as SVGGeometryElement;
-                    const length = geometryEl.getTotalLength?.() || 0;
-                    if (length <= 0) return;
-
-                    const svgEl = el as SVGElement;
-                    const startTime = config.delay + (index * config.stagger);
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.max(0, Math.min(elapsed / config.duration, 1));
-                    const easedProgress = ease(progress);
-
-                    const offset = (length * (1 - easedProgress)).toString();
-
-                    // Force the exact offset and kill transitions
-                    svgEl.style.transition = 'none';
-                    svgEl.style.animation = 'none';
-
-                    // Ensure dash array is present
-                    svgEl.style.strokeDasharray = length.toString();
-                    svgEl.setAttribute('stroke-dasharray', length.toString());
-
-                    svgEl.style.strokeDashoffset = offset;
-                    svgEl.setAttribute('stroke-dashoffset', offset);
-                });
-
-                // Force a browser paint so the user can see the scrubbing
-                await new Promise(r => requestAnimationFrame(r));
-
-                // Wait for library to convert to canvas
-                const frameCanvas = await toCanvas(element, {
-                    backgroundColor: '#f1f5f9',
-                    pixelRatio: 1,
-                });
-
-                captureCanvas.width = frameCanvas.width;
-                captureCanvas.height = frameCanvas.height;
-                const ctx = captureCanvas.getContext('2d');
-                if (ctx) ctx.drawImage(frameCanvas, 0, 0);
-            }
-
-            recorder.stop();
-
-        } catch (error) {
-            console.error('Recording failed:', error);
-            isRecordingRef.current = false;
-            setIsRecording(false);
-            setIsPlaying(true);
-            alert('Failed to record animation.');
-        }
-    };
 
     const stopRecording = () => {
         (window as any).__stopRecording = true;
     };
 
-    const renderFrame = (time: number) => {
+    const renderFrame = React.useCallback((time: number) => {
         if (!svgContainerRef.current) return;
 
         const elements = svgContainerRef.current.querySelectorAll(
@@ -351,8 +130,6 @@ export default function SvgTracer() {
             if (length <= 0) return;
 
             const svgEl = el as SVGElement;
-
-            // Kill all CSS animations to prevent flickering/conflicts
             svgEl.style.animation = 'none';
             svgEl.style.transition = 'none';
 
@@ -377,364 +154,67 @@ export default function SvgTracer() {
                 }
             }
         });
-    };
+    }, [config.delay, config.stagger, config.duration, config.easing, config.useOriginalColor]);
+
+    // Effect for manual scrubbing / initial render
+    useEffect(() => {
+        if (!isPlaying || isStopped) {
+            console.log('rendering scrub frame@', currentTime);
+            renderFrame(currentTime);
+        }
+    }, [currentTime, isPlaying, isStopped, renderFrame, animationKey]);
 
     useEffect(() => {
-        if (isRecording) return;
-
-        // Update total duration whenever config or SVG changes
-        const elements = svgContainerRef.current?.querySelectorAll(
-            'path, circle, rect, line, polyline, polygon, ellipse'
-        ) || [];
-        const duration = config.delay + (elements.length * config.stagger) + config.duration;
-        setTotalDuration(duration);
-
-        if (!isPlaying || isStopped) {
-            renderFrame(currentTime);
-            return;
-        }
-
+        if (isRecording || !isPlaying || isStopped) return;
         let rafId: number;
         let lastTime = performance.now();
-        const startTime = lastTime - (currentTime * 1000);
+        let loopTime = currentTime;
 
         const update = (now: number) => {
-            const elapsed = (now - startTime) / 1000;
+            if (!loopStateRef.current.isPlaying || loopStateRef.current.isStopped) return;
 
-            if (elapsed >= duration) {
+            const delta = (now - lastTime) / 1000;
+            lastTime = now;
+            loopTime += delta;
+
+            const duration = loopStateRef.current.totalDuration;
+
+            if (loopTime >= duration && duration > 0) {
                 setCurrentTime(duration);
                 renderFrame(duration);
                 setIsPlaying(false);
                 return;
             }
 
-            setCurrentTime(elapsed);
-            renderFrame(elapsed);
+            setCurrentTime(loopTime);
+            console.log('rendering frame@', loopTime);
+            renderFrame(loopTime);
             rafId = requestAnimationFrame(update);
         };
 
         rafId = requestAnimationFrame(update);
         return () => cancelAnimationFrame(rafId);
-    }, [isPlaying, isRecording, isStopped, totalDuration, animationKey, config, svgContent, currentTime]);
-    // We include isPlaying here to update the animationPlayState without fully remounting
+    }, [isPlaying, isStopped, animationKey, currentTime, svgContent, config, renderFrame]);
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row font-sans" >
-            {/* Global styles for the keyframes and optional overrides */}
             < style > {`
-        @keyframes svg-trace {
-          to {
-            stroke-dashoffset: 0;
-          }
-        }
-        
-        .force-outline * {
-          fill: transparent !important;
-          stroke: ${config.useOriginalColor ? `var(--item-stroke, ${config.strokeColor})` : config.strokeColor} !important;
-          stroke-width: ${config.strokeWidth}px !important;
-        }
-      `} </style>
+                @keyframes svg-trace {
+                    to { stroke-dashoffset: 0; }
+                }
+                .force-outline * {
+                    fill: transparent !important;
+                    stroke: ${config.useOriginalColor ? `var(--item-stroke, ${config.strokeColor})` : config.strokeColor} !important;
+                    stroke-width: ${config.strokeWidth}px !important;
+                }
+            `} </style>
 
-            {/* Sidebar Controls */}
-            <aside className="w-full md:w-72 bg-white border-r border-slate-200 p-4 flex flex-col gap-4 shadow-sm z-10 overflow-y-auto text-sm shrink-0" >
-                <div>
-                    <h1 className="text-xl font-bold flex items-center gap-2 text-indigo-600" >
-                        <MousePointerClick className="w-5 h-5" />
-                        SVG Tracer
-                    </h1>
-                </div>
+            <Sidebar
+                vTracerCanvasRef={vTracerCanvasRef}
+                vTracerSvgRef={vTracerSvgRef}
+            />
 
-                {/* Tab Switcher */}
-                <div className="flex bg-slate-100 p-1 rounded-lg">
-                    <button
-                        onClick={() => setActiveTab('animation')}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'animation' ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Animation
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('tracer')}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'tracer' ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Tracer
-                    </button>
-                </div>
-
-                {activeTab === 'animation' ? (
-                    <>
-                        {/* Playback Controls */}
-                        <div className="border-b border-slate-100 pb-4 space-y-4">
-                            <PlaybackControls
-                                isPlaying={isPlaying}
-                                togglePlay={togglePlay}
-                                isRecording={isRecording}
-                                recordingProgress={recordingProgress}
-                                restartAnimation={restartAnimation}
-                                stopAnimation={stopAnimation}
-                                handleRecord={handleRecord}
-                                stopRecording={stopRecording}
-                            />
-
-                            <div className="space-y-1.5 px-1">
-                                <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-                                    <span>Progress</span>
-                                    <span>{currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min={0}
-                                    max={totalDuration || 1}
-                                    step={0.01}
-                                    value={currentTime}
-                                    onChange={(e) => {
-                                        setIsPlaying(false);
-                                        setIsStopped(false);
-                                        setCurrentTime(parseFloat(e.target.value));
-                                    }}
-                                    className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Upload Section */}
-                        <div className="space-y-2 border-b border-slate-100 pb-4" >
-                            <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
-                                <label
-                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group"
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={handleSvgDrop}
-                                >
-                                    <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
-                                    <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
-                                        Load SVG
-                                    </span>
-                                    < input
-                                        type="file"
-                                        accept=".svg"
-                                        className="hidden"
-                                        onChange={handleFileUpload}
-                                    />
-                                </label>
-
-                                < label
-                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={handleImageDrop}
-                                >
-                                    <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
-                                    <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
-                                        Ref Image
-                                    </span>
-                                    < input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleImageUpload}
-                                    />
-                                </label>
-                            </div>
-
-                            {/* Toolkit Section */}
-                            <div className="pt-2">
-                                <div className="flex items-center gap-2 text-slate-800 font-semibold mb-3 px-1" >
-                                    <Wrench className="w-4 h-4 text-indigo-500" />
-                                    Toolkit
-                                </div>
-                                <div className="flex flex-row flex-wrap gap-1.5">
-                                    <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
-                                    <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="Image VTracer" />
-                                    <ToolkitLink href="https://editor.graphite.art/" label="Graphite Editor" />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Configuration */}
-                        <div className="space-y-3" >
-                            <div className="flex items-center gap-2 text-slate-800 font-semibold border-b border-slate-100 pb-1.5" >
-                                <Settings2 className="w-4 h-4" />
-                                Animation
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                                <NumberInput label="Duration" value={config.duration} min={0.1} max={10} step={0.1} unit="s" onChange={(val) => handleConfigChange('duration', val)} />
-                                <NumberInput label="Stagger Step" value={config.stagger} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('stagger', val)} />
-                                <NumberInput label="Initial Delay" value={config.delay} min={0} max={5} step={0.1} unit="s" onChange={(val) => handleConfigChange('delay', val)} />
-                                <NumberInput label="Stroke Width" value={config.strokeWidth} min={0.1} max={20} step={0.1} unit="px" onChange={(val) => handleConfigChange('strokeWidth', val)} />
-                                <NumberInput label="SVG Scale" value={config.svgScale} min={0.1} max={5} step={0.1} unit={'x'} onChange={(val) => handleConfigChange('svgScale', val)} />
-                            </div>
-
-                            < div className="grid grid-cols-2 gap-4" >
-                                <div className="space-y-1.5" >
-                                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wider" > Easing </label>
-                                    <select
-                                        value={config.easing}
-                                        onChange={(e) => handleConfigChange('easing', e.target.value)}
-                                        className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                                    >
-                                        <option value="linear" > Linear </option>
-                                        < option value="ease" > Ease </option>
-                                        < option value="ease-in" > Ease In </option>
-                                        < option value="ease-out" > Ease Out </option>
-                                        < option value="ease-in-out" > Ease In Out </option>
-                                    </select>
-                                </div>
-
-                                < div className="space-y-1.5" >
-                                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wider" > Direction </label>
-                                    < select
-                                        value={config.direction}
-                                        onChange={(e) => handleConfigChange('direction', e.target.value)}
-                                        className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                                    >
-                                        <option value="normal" > Normal </option>
-                                        < option value="reverse" > Reverse </option>
-                                        < option value="alternate" > Alternate </option>
-                                        < option value="alternate-reverse" > Alt Reverse </option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            < div className="pt-2 border-t border-slate-100 space-y-2.5" >
-                                <label className="flex items-center justify-between cursor-pointer" >
-                                    <span className="text-sm font-medium text-slate-700" > Force Outline Mode </span>
-                                    < div className="relative" >
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only"
-                                            checked={config.forceOutline}
-                                            onChange={(e) => handleConfigChange('forceOutline', e.target.checked)}
-                                        />
-                                        < div className={`block w-10 h-6 rounded-full transition-colors ${config.forceOutline ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                        < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.forceOutline ? 'transform translate-x-4' : ''}`}> </div>
-                                    </div>
-                                </label>
-
-                                <label className="flex items-center justify-between cursor-pointer" >
-                                    <span className="text-sm font-medium text-slate-700" > Use Original Fill Colors </span>
-                                    < div className="relative" >
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only"
-                                            checked={config.useOriginalColor}
-                                            onChange={(e) => handleConfigChange('useOriginalColor', e.target.checked)}
-                                        />
-                                        < div className={`block w-10 h-6 rounded-full transition-colors ${config.useOriginalColor ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                        < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.useOriginalColor ? 'transform translate-x-4' : ''}`}> </div>
-                                    </div>
-                                </label>
-
-                                {
-                                    config.forceOutline && !config.useOriginalColor && (
-                                        <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2" >
-                                            <span className="text-sm text-slate-500" > Stroke Color </span>
-                                            < input
-                                                type="color"
-                                                value={config.strokeColor}
-                                                onChange={(e) => handleConfigChange('strokeColor', e.target.value)
-                                                }
-                                                className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
-                                            />
-                                        </div>
-                                    )}
-
-                                < div className="pt-2 border-t border-slate-100 space-y-2.5" >
-                                    <label className="flex items-center justify-between cursor-pointer" >
-                                        <span className="text-sm font-medium text-slate-700" > Show Reference Image </span>
-                                        < div className="relative" >
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only"
-                                                checked={config.showOverlay}
-                                                onChange={(e) => handleConfigChange('showOverlay', e.target.checked)}
-                                            />
-                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.showOverlay ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                            < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.showOverlay ? 'transform translate-x-4' : ''}`}> </div>
-                                        </div>
-                                    </label>
-
-                                    {
-                                        config.showOverlay && (
-                                            <>
-                                                <div className="space-y-2">
-                                                    <NumberInput label="Overlay Opacity" value={config.overlayOpacity} min={0} max={1} step={0.01} onChange={(val) => handleConfigChange('overlayOpacity', val)} />
-                                                    <NumberInput label="Overlay Scale" value={config.overlayScale} min={0.1} max={3} step={0.05} onChange={(val) => handleConfigChange('overlayScale', val)} />
-                                                </div>
-
-                                                <div className="space-y-2 pt-1">
-                                                    <label className="flex items-center justify-between cursor-pointer" >
-                                                        <span className="text-sm font-medium text-slate-700" > Position & Resize Image </span>
-                                                        < div className="relative" >
-                                                            <input
-                                                                type="checkbox"
-                                                                className="sr-only"
-                                                                checked={config.isOverlayDraggable}
-                                                                onChange={(e) => handleConfigChange('isOverlayDraggable', e.target.checked)}
-                                                            />
-                                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                                            < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
-                                                        </div>
-                                                    </label>
-
-                                                    <button
-                                                        onClick={resetOverlayPosition}
-                                                        className="w-full py-1.5 px-3 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
-                                                    >
-                                                        Reset Position
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-                                </div>
-                            </div>
-
-                            <div className="pt-2 border-t border-slate-100 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium text-slate-700">Container Background</span>
-                                    <input
-                                        type="color"
-                                        value={config.backgroundColor.slice(0, 7)}
-                                        onChange={(e) => {
-                                            const opacity = Math.round(parseFloat(config.backgroundColor.slice(7, 9) || 'ff') / 2.55);
-                                            const hex = e.target.value;
-                                            handleConfigChange('backgroundColor', hex + (config.backgroundColor.slice(7, 9) || 'cc'));
-                                        }}
-                                        className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-                                        <span>Opacity</span>
-                                        <span>{Math.round((parseInt(config.backgroundColor.slice(7, 9) || 'cc', 16) / 255) * 100)}%</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="255"
-                                        step="1"
-                                        value={parseInt(config.backgroundColor.slice(7, 9) || 'cc', 16)}
-                                        onChange={(e) => {
-                                            const opacity = parseInt(e.target.value).toString(16).padStart(2, '0');
-                                            const color = config.backgroundColor.slice(0, 7);
-                                            handleConfigChange('backgroundColor', color + opacity);
-                                        }}
-                                        className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <ImageTracer
-                        onApplySvg={handleOnApplyTracedSvg}
-                        vTracerCanvasRef={vTracerCanvasRef}
-                        vTracerSvgRef={vTracerSvgRef}
-                    />
-                )}
-            </aside>
-
-            {/* Main Preview Area */}
             <main ref={previewAreaRef} className="flex flex-col h-screen md:h-auto md:flex-1 bg-slate-200 relative" >
-                {/* Checkerboard background pattern for transparency visualization */}
                 < div
                     className="absolute inset-0 opacity-40 pointer-events-none"
                     style={{
@@ -757,7 +237,6 @@ export default function SvgTracer() {
                         className="w-full max-w-2xl aspect-square flex items-center justify-center border border-white/50 p-8 transition-all relative"
                         style={{ backgroundColor: config.backgroundColor }}
                     >
-                        {/* Reference Image Overlay */}
                         {overlayImage && config.showOverlay && (
                             <div
                                 className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-300 z-0 ${config.isOverlayDraggable ? 'pointer-events-auto' : 'pointer-events-none'}`}
@@ -805,9 +284,7 @@ export default function SvgTracer() {
                                         position: absolute;
                                         width: 100%;
                                         margin-bottom: 50px;
-                                        
                                     }
-                                    
                                     #vtracer-svg-internal > path:hover {
                                         stroke: #ff0;
                                     }
@@ -827,4 +304,3 @@ export default function SvgTracer() {
         </div>
     );
 }
-

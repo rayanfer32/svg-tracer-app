@@ -4,23 +4,19 @@ import { Play, Pause, RotateCcw, Video, Square, SkipForward } from 'lucide-react
 interface PlaybackControlsProps {
     isPlaying: boolean;
     togglePlay: () => void;
-    isRecording: boolean;
-    recordingProgress: number;
+
     restartAnimation: () => void;
     stopAnimation: () => void;
-    handleRecord: () => void;
-    stopRecording: () => void;
+
 }
 
 export function PlaybackControls({
     isPlaying,
     togglePlay,
-    isRecording,
-    recordingProgress,
+
     restartAnimation,
     stopAnimation,
-    handleRecord,
-    stopRecording
+
 }: PlaybackControlsProps) {
     return (
         <div className="flex flex-col gap-2 w-full" >
@@ -47,17 +43,6 @@ export function PlaybackControls({
                     <RotateCcw className="w-4 h-4" />
                 </button>
             </div>
-            {/* <button
-                onClick={isRecording ? stopRecording : handleRecord}
-                className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-medium transition-all active:scale-[0.98] ${isRecording
-                    ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
-                    }`}
-                title={isRecording ? "Stop Recording" : "Record as WebM"}
-            >
-                {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Video className="w-4 h-4" />}
-                {isRecording ? `Stop (${Math.round(recordingProgress * 100)}%)` : 'Record'}
-            </button> */}
         </div>
     );
 }

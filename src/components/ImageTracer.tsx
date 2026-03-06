@@ -1,4 +1,4 @@
-import { ImageIcon, Upload } from 'lucide-react';
+import { ImageIcon, Upload, Sparkles, Palette, Copy, Square, Ruler, Scissors, CircleDot } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { NumberInput } from './NumberInput';
 
@@ -13,6 +13,14 @@ interface VTracerConfig {
     colorPrecision: number;
     layerDifference: number;
     pathPrecision: number;
+    // Slider Limits
+    limitFilterSpeckle: number;
+    limitColorPrecision: number;
+    limitLayerDifference: number;
+    limitCornerThreshold: number;
+    limitLengthThreshold: number;
+    limitSpliceThreshold: number;
+    limitPathPrecision: number;
 }
 
 interface ImageTracerProps {
@@ -56,6 +64,13 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
         colorPrecision: 6,
         layerDifference: 16,
         pathPrecision: 8,
+        limitFilterSpeckle: 16,
+        limitColorPrecision: 8,
+        limitLayerDifference: 255,
+        limitCornerThreshold: 180,
+        limitLengthThreshold: 10,
+        limitSpliceThreshold: 180,
+        limitPathPrecision: 16,
     });
 
     const handleVTracerConfigChange = <T extends keyof VTracerConfig>(key: T, value: VTracerConfig[T]) => {
@@ -242,21 +257,84 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <NumberInput label="Filter Speckle" value={vTracerConfig.filterSpeckle} min={0} max={16} step={1} onChange={(val) => handleVTracerConfigChange('filterSpeckle', val)} />
+                    <NumberInput
+                        label="Filter Speckle"
+                        icon={Sparkles}
+                        value={vTracerConfig.filterSpeckle}
+                        min={0}
+                        max={vTracerConfig.limitFilterSpeckle}
+                        step={1}
+                        onChange={(val) => handleVTracerConfigChange('filterSpeckle', val)}
+                        onMaxChange={(val) => handleVTracerConfigChange('limitFilterSpeckle', val)}
+                    />
                     {vTracerConfig.clusteringMode === 'color' && (
                         <>
-                            <NumberInput label="Color Precision" value={vTracerConfig.colorPrecision} min={1} max={8} step={1} onChange={(val) => handleVTracerConfigChange('colorPrecision', val)} />
-                            <NumberInput label="Layer Difference" value={vTracerConfig.layerDifference} min={0} max={255} step={1} onChange={(val) => handleVTracerConfigChange('layerDifference', val)} />
+                            <NumberInput
+                                label="Color Precision"
+                                icon={Palette}
+                                value={vTracerConfig.colorPrecision}
+                                min={1}
+                                max={vTracerConfig.limitColorPrecision}
+                                step={1}
+                                onChange={(val) => handleVTracerConfigChange('colorPrecision', val)}
+                                onMaxChange={(val) => handleVTracerConfigChange('limitColorPrecision', val)}
+                            />
+                            <NumberInput
+                                label="Layer Difference"
+                                icon={Copy}
+                                value={vTracerConfig.layerDifference}
+                                min={0}
+                                max={vTracerConfig.limitLayerDifference}
+                                step={1}
+                                onChange={(val) => handleVTracerConfigChange('layerDifference', val)}
+                                onMaxChange={(val) => handleVTracerConfigChange('limitLayerDifference', val)}
+                            />
                         </>
                     )}
                     {vTracerConfig.mode === 'spline' && (
                         <>
-                            <NumberInput label="Corner Threshold" value={vTracerConfig.cornerThreshold} min={0} max={180} step={1} onChange={(val) => handleVTracerConfigChange('cornerThreshold', val)} />
-                            <NumberInput label="Segment Length" value={vTracerConfig.lengthThreshold} min={3.5} max={10} step={0.5} onChange={(val) => handleVTracerConfigChange('lengthThreshold', val)} />
-                            <NumberInput label="Splice Threshold" value={vTracerConfig.spliceThreshold} min={0} max={180} step={1} onChange={(val) => handleVTracerConfigChange('spliceThreshold', val)} />
+                            <NumberInput
+                                label="Corner Threshold"
+                                icon={Square}
+                                value={vTracerConfig.cornerThreshold}
+                                min={0}
+                                max={vTracerConfig.limitCornerThreshold}
+                                step={1}
+                                onChange={(val) => handleVTracerConfigChange('cornerThreshold', val)}
+                                onMaxChange={(val) => handleVTracerConfigChange('limitCornerThreshold', val)}
+                            />
+                            <NumberInput
+                                label="Segment Length"
+                                icon={Ruler}
+                                value={vTracerConfig.lengthThreshold}
+                                min={3.5}
+                                max={vTracerConfig.limitLengthThreshold}
+                                step={0.5}
+                                onChange={(val) => handleVTracerConfigChange('lengthThreshold', val)}
+                                onMaxChange={(val) => handleVTracerConfigChange('limitLengthThreshold', val)}
+                            />
+                            <NumberInput
+                                label="Splice Threshold"
+                                icon={Scissors}
+                                value={vTracerConfig.spliceThreshold}
+                                min={0}
+                                max={vTracerConfig.limitSpliceThreshold}
+                                step={1}
+                                onChange={(val) => handleVTracerConfigChange('spliceThreshold', val)}
+                                onMaxChange={(val) => handleVTracerConfigChange('limitSpliceThreshold', val)}
+                            />
                         </>
                     )}
-                    <NumberInput label="Path Precision" value={vTracerConfig.pathPrecision} min={0} max={16} step={1} onChange={(val) => handleVTracerConfigChange('pathPrecision', val)} />
+                    <NumberInput
+                        label="Path Precision"
+                        icon={CircleDot}
+                        value={vTracerConfig.pathPrecision}
+                        min={0}
+                        max={vTracerConfig.limitPathPrecision}
+                        step={1}
+                        onChange={(val) => handleVTracerConfigChange('pathPrecision', val)}
+                        onMaxChange={(val) => handleVTracerConfigChange('limitPathPrecision', val)}
+                    />
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 space-y-3">

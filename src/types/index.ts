@@ -14,4 +14,12 @@ export interface TracerConfig {
     overlayScale: number;
     svgScale: number;
     backgroundColor: string;
+    // Slider Limits
+    limitDuration: number;
+    limitStagger: number;
+    limitDelay: number;
+    limitStrokeWidth: number;
+    limitSvgScale: number;
+    limitOverlayOpacity: number;
+    limitOverlayScale: number;
 }
