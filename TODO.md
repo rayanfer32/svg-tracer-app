@@ -14,6 +14,8 @@ Add your new features and tasks below:
 
 ## Bugs
 
+- public folder files are not avilable in vercel
+
 - Switching back to tracer tab clears the loaded image
 
 - Svg animation reset during pausing
