@@ -103,6 +103,8 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
 
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
+        svg.setAttribute('viewBox', `0 0 ${img.naturalWidth} ${img.naturalHeight}`);
+
         ctx.drawImage(img, 0, 0);
 
         const deg2rad = (deg: number) => deg / 180 * Math.PI;

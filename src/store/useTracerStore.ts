@@ -106,7 +106,7 @@ export const useTracerStore = create<TracerState>()(subscribeWithSelector((set) 
         animationKey: state.animationKey + 1,
         isPlaying: true,
         isStopped: false,
-        currentTime: 0
+        // currentTime: 0
     })),
 
     // Playback State

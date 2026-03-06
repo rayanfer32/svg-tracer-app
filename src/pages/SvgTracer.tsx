@@ -356,7 +356,7 @@ export default function SvgTracer() {
                     onTouchCancel={handleEnd}
                 >
                     <div
-                        className="w-full max-w-2xl aspect-square flex items-center justify-center border border-white/50 p-8 transition-all relative"
+                        className="w-full max-w-2xl aspect-square flex  border border-white/50 p-8 transition-all relative"
                         style={{ backgroundColor: config.backgroundColor }}
                     >
                         {overlayImage && config.showOverlay && (
@@ -399,25 +399,35 @@ export default function SvgTracer() {
                                 dangerouslySetInnerHTML={{ __html: svgContent }}
                             />
                         ) : (
-                            <div className="absolute w-full h-full flex items-center justify-center bg-slate-100/50 rounded-lg border border-slate-200">
-                                <canvas id="vtracer-canvas-internal" ref={vTracerCanvasRef} className="max-w-full max-h-full " />
+                            <div id="vtracer-container" className="">
+                                <canvas id="vtracer-canvas-internal" ref={vTracerCanvasRef} />
+                                <svg
+                                    id="vtracer-svg-internal"
+                                    ref={vTracerSvgRef}
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    style={{ display: 'block' }}
+                                    // viewBox='0 0 1024 1024'
+                                    className=""
+                                />
+
                                 <style>
                                     {`#vtracer-svg-internal, #vtracer-canvas-internal {
-                                        position: absolute;
-                                        width: 100%;
-                                        margin-bottom: 50px;
+                                            position: absolute;
+                                            width: 100%;
+                                            margin-bottom: 50px;
+                                    }
+                                    #vtracer-container {
+                                           position: relative;
+                                            height: max-content;
+                                            box-sizing: border-box;
+                                            width: 100%;
+                                            max-width: 100%;
                                     }
                                     #vtracer-svg-internal > path:hover {
                                         stroke: #ff0;
                                     }
                                     `}
                                 </style>
-                                <svg
-                                    id="vtracer-svg-internal"
-                                    ref={vTracerSvgRef}
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="absolute inset-0 w-full h-full"
-                                />
                             </div>
                         )}
                     </div>
