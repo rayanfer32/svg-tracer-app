@@ -170,22 +170,7 @@ export function Sidebar({
                                     />
                                 </label>
 
-                                < label
-                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={handleImageDrop}
-                                >
-                                    <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
-                                    <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
-                                        Ref Image
-                                    </span>
-                                    < input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleImageUpload}
-                                    />
-                                </label>
+
                             </div>
 
 
@@ -362,6 +347,9 @@ export function Sidebar({
                                 )}
 
                             < div className="pt-2 border-t border-slate-100 space-y-2.5" >
+
+
+
                                 <label className="flex items-center justify-between cursor-pointer" >
                                     <span className="text-sm font-medium text-slate-700" > Show Reference Image </span>
                                     < div className="relative" >
@@ -379,6 +367,24 @@ export function Sidebar({
                                 {
                                     config.showOverlay && (
                                         <>
+
+                                            < label
+                                                className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
+                                                onDragOver={(e) => e.preventDefault()}
+                                                onDrop={handleImageDrop}
+                                            >
+                                                <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
+                                                <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
+                                                    Ref Image
+                                                </span>
+                                                < input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleImageUpload}
+                                                />
+                                            </label>
+
                                             <div className="space-y-1">
                                                 <NumberInput
                                                     label="Overlay Opacity"

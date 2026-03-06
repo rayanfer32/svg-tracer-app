@@ -1,19 +1,25 @@
-# Vector Stroke Animator - TODO
+# Vector Stroke Animator / SVG tracer app
+
+## Todos
 
 Add your new features and tasks below:
 
 ## Planned Features
 
-Implement visioncortex https://github.com/visioncortex/vtracer/tree/master/webapp/app
+- [ ] Change load svg drop palceholder to load image/svg , which should take the user to the tracer tab and show the image there
 
-- [x] Resize and position the reference image using a select box
-
-- [ ] Add new feature 2
+- [ ] Add option to auto trace when changing config values in tracer tab.
 
 ## Bugs
 
-- [x] Fix SVG recording animation stuck on the final frame
+- Svg animation reset during pausing
 
 ## Completed
 
 - [x] Initial release
+
+- [x] Implement visioncortex https://github.com/visioncortex/vtracer/tree/master/webapp/app
+
+- [x] Resize and position the reference image using a select box
+
+- [x] Fix SVG recording animation stuck on the final frame
