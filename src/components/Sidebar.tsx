@@ -1,10 +1,11 @@
 import {
     Upload, Settings2,
     Image as ImageIcon, MousePointerClick, Wrench,
-    Timer, Layers, Watch, PenTool, Maximize, Contrast
+    Timer, Layers, Watch, PenTool, Maximize, Contrast,
+    Undo2,
+    Move
 } from 'lucide-react';
 import React from 'react';
-import type { TracerConfig } from '../types';
 import { NumberInput } from './NumberInput';
 import { ToolkitLink } from './ToolkitLink';
 import { PlaybackControls } from './PlaybackControls';
@@ -20,8 +21,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({
-    handleRecord,
-    stopRecording,
+
     vTracerCanvasRef,
     vTracerSvgRef
 }: SidebarProps) {
@@ -30,16 +30,12 @@ export function Sidebar({
         config, updateConfig,
         isPlaying, setIsPlaying,
         isStopped, setIsStopped,
-        isRecording,
-        recordingProgress,
         restartAnimation,
         currentTime, setCurrentTime,
         totalDuration,
         setSvgContent,
         setOverlayImage,
         setOverlayPos,
-        setIsDragging,
-        setIsResizing,
         handleOnApplyTracedSvg
     } = useTracerStore();
 
@@ -125,12 +121,13 @@ export function Sidebar({
     };
     return (
         <aside className="w-full md:w-80 bg-white border-r border-slate-200 p-4 flex flex-col gap-4 shadow-sm z-10 overflow-y-auto text-sm shrink-0" >
-            <div>
-                <h1 className="text-xl font-bold flex items-center gap-2 text-indigo-600" >
-                    <MousePointerClick className="w-5 h-5" />
-                    SVG Tracer
-                </h1>
+
+            <div className="flex flex-row flex-wrap gap-1">
+                <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
+                <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="VTracer" />
+                <ToolkitLink href="https://editor.graphite.art/" label="Graphite" />
             </div>
+
 
             {/* Tab Switcher */}
             <div className="flex bg-slate-100 p-1 rounded-lg">
@@ -152,6 +149,47 @@ export function Sidebar({
                 <>
                     {/* Playback Controls */}
                     <div className="border-b border-slate-100 pb-4 space-y-4">
+
+                        {/* Upload Section */}
+                        <div className="space-y-2 border-b border-slate-100 pb-4" >
+                            <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
+                                <label
+                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group"
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={handleSvgDrop}
+                                >
+                                    <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
+                                    <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
+                                        Load SVG
+                                    </span>
+                                    < input
+                                        type="file"
+                                        accept=".svg"
+                                        className="hidden"
+                                        onChange={handleFileUpload}
+                                    />
+                                </label>
+
+                                < label
+                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={handleImageDrop}
+                                >
+                                    <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
+                                    <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
+                                        Ref Image
+                                    </span>
+                                    < input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleImageUpload}
+                                    />
+                                </label>
+                            </div>
+
+
+                        </div>
                         <PlaybackControls
                             isPlaying={isPlaying}
                             togglePlay={togglePlay}
@@ -182,57 +220,7 @@ export function Sidebar({
                         </div>
                     </div>
 
-                    {/* Upload Section */}
-                    <div className="space-y-2 border-b border-slate-100 pb-4" >
-                        <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
-                            <label
-                                className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group"
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={handleSvgDrop}
-                            >
-                                <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
-                                <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
-                                    Load SVG
-                                </span>
-                                < input
-                                    type="file"
-                                    accept=".svg"
-                                    className="hidden"
-                                    onChange={handleFileUpload}
-                                />
-                            </label>
 
-                            < label
-                                className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={handleImageDrop}
-                            >
-                                <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
-                                <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
-                                    Ref Image
-                                </span>
-                                < input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageUpload}
-                                />
-                            </label>
-                        </div>
-
-                        {/* Toolkit Section */}
-                        <div className="pt-2">
-                            <div className="flex items-center gap-2 text-slate-800 font-semibold mb-3 px-1" >
-                                <Wrench className="w-4 h-4 text-indigo-500" />
-                                Toolkit
-                            </div>
-                            <div className="flex flex-row flex-wrap gap-1.5">
-                                <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
-                                <ToolkitLink href="https://www.visioncortex.org/vtracer/" label="VTracer" />
-                                <ToolkitLink href="https://editor.graphite.art/" label="Graphite" />
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Configuration */}
                     <div className="space-y-3" >
@@ -416,34 +404,38 @@ export function Sidebar({
 
                                             <div className="space-y-2 pt-1">
                                                 <label className="flex items-center justify-between cursor-pointer" >
-                                                    <span className="text-sm font-medium text-slate-700" > Position & Resize Image </span>
-                                                    < div className="relative" >
-                                                        <input
-                                                            type="checkbox"
-                                                            className="sr-only"
-                                                            checked={config.isOverlayDraggable}
-                                                            onChange={(e) => updateConfig('isOverlayDraggable', e.target.checked)}
-                                                        />
-                                                        < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
-                                                        < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
+                                                    <span className="text-sm font-medium text-slate-700" > <Move size={16} />  </span>
+                                                    {/* <button
+                                                        
+                                                        className="w-full py-1.5 px-3 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
+                                                    >
+                                                    </button> */}
+                                                    <div className="flex items-center gap-2">
+                                                        <Undo2 onClick={resetOverlayPosition} size={16} />
+                                                        < div className="relative" >
+
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only"
+                                                                checked={config.isOverlayDraggable}
+                                                                onChange={(e) => updateConfig('isOverlayDraggable', e.target.checked)}
+                                                            />
+                                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                                            < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
+                                                        </div>
                                                     </div>
                                                 </label>
 
-                                                <button
-                                                    onClick={resetOverlayPosition}
-                                                    className="w-full py-1.5 px-3 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
-                                                >
-                                                    Reset Position
-                                                </button>
+
                                             </div>
                                         </>
                                     )}
                             </div>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                        <div className="flex gap-2 pt-2 border-t border-slate-100 space-y-2.5">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-slate-700">Container Background</span>
+                                <span className="text-sm font-medium text-slate-700">Background</span>
                                 <input
                                     type="color"
                                     value={config.backgroundColor.slice(0, 7)}
@@ -454,7 +446,7 @@ export function Sidebar({
                                     className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
                                 />
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-1 w-full">
                                 <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                                     <span>Opacity</span>
                                     <span>{Math.round((parseInt(config.backgroundColor.slice(7, 9) || 'cc', 16) / 255) * 100)}%</span>
