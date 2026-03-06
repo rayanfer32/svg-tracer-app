@@ -137,7 +137,7 @@ export const useTracerStore = create<TracerState>()(subscribeWithSelector((set) 
     handleOnApplyTracedSvg: (newSvg) => set((state) => ({
         svgContent: newSvg,
         animationKey: state.animationKey + 1,
-        activeTab: 'animation',
+        // activeTab: 'animation',
         currentTime: 0,
         isPlaying: true,
         isStopped: false

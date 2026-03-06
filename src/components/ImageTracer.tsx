@@ -1,5 +1,5 @@
 import { ImageIcon, Upload, Sparkles, Palette, Copy, Square, Ruler, Scissors, CircleDot } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { NumberInput } from './NumberInput';
 
 interface VTracerConfig {
@@ -38,6 +38,8 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
     const [isTracing, setIsTracing] = useState(false);
     const [traceProgress, setTraceProgress] = useState(0);
     const [tracedSvgContent, setTracedSvgContent] = useState<string | null>(null);
+    const [autoTrace, setAutoTrace] = useState(false);
+    const [autoApply, setAutoApply] = useState(false);
 
     const handleInternalImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -154,6 +156,25 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
 
         requestAnimationFrame(tick);
     };
+
+    // Auto-trace effect
+    useEffect(() => {
+        if (!autoTrace || !sourceImage || isTracing) return;
+
+        const timer = setTimeout(() => {
+            handleTrace();
+        }, 300);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vTracerConfig, sourceImage, autoTrace]);
+
+    // Handle auto-apply when tracedSvgContent changes
+    useEffect(() => {
+        if (autoApply && tracedSvgContent) {
+            onApplySvg(tracedSvgContent);
+        }
+    }, [tracedSvgContent, autoApply, onApplySvg]);
 
     const applyTracedSvg = () => {
         if (tracedSvgContent) {
@@ -340,6 +361,42 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 space-y-3">
+                    <div className="flex flex-col gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <label className="flex items-center justify-between cursor-pointer group">
+                            <div className="flex items-center gap-2">
+                                <Sparkles className={`w-3.5 h-3.5 ${autoTrace ? 'text-indigo-500' : 'text-slate-400'}`} />
+                                <span className="text-xs font-medium text-slate-700">Auto Trace Change</span>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only"
+                                    checked={autoTrace}
+                                    onChange={(e) => setAutoTrace(e.target.checked)}
+                                />
+                                <div className={`block w-8 h-4.5 rounded-full transition-colors ${autoTrace ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
+                                <div className={`absolute left-0.75 top-0.75 bg-white w-3 h-3 rounded-full transition-transform ${autoTrace ? 'transform translate-x-3.5' : ''}`}></div>
+                            </div>
+                        </label>
+
+                        <label className="flex items-center justify-between cursor-pointer group">
+                            <div className="flex items-center gap-2">
+                                <Upload className={`w-3.5 h-3.5 ${autoApply ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                <span className="text-xs font-medium text-slate-700">Auto Apply to Main</span>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only"
+                                    checked={autoApply}
+                                    onChange={(e) => setAutoApply(e.target.checked)}
+                                />
+                                <div className={`block w-8 h-4.5 rounded-full transition-colors ${autoApply ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                                <div className={`absolute left-0.75 top-0.75 bg-white w-3 h-3 rounded-full transition-transform ${autoApply ? 'transform translate-x-3.5' : ''}`}></div>
+                            </div>
+                        </label>
+                    </div>
+
                     <button
                         onClick={handleTrace}
                         disabled={isTracing || !sourceImage}

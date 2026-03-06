@@ -10,7 +10,11 @@ Add your new features and tasks below:
 
 - [ ] Add option to auto trace when changing config values in tracer tab.
 
+- Change the sidebar to use https://leva.pmnd.rs/
+
 ## Bugs
+
+- Switching back to tracer tab clears the loaded image
 
 - Svg animation reset during pausing
 
