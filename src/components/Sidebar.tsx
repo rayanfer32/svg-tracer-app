@@ -411,29 +411,35 @@ export function Sidebar({
                                             </div>
 
                                             <div className="space-y-2 pt-1">
-                                                <label className="flex items-center justify-between cursor-pointer" >
-                                                    <span className="text-sm font-medium text-slate-400 flex  gap-2" > <Move size={16} /> Change Position  </span>
+                                                <div className="flex items-center justify-between" >
+                                                    <span className="text-sm font-medium text-slate-400 flex items-center gap-2" >
+                                                        <Move size={16} /> Change Position
+                                                    </span>
 
-                                                    <button onClick={resetOverlayPosition} className=' flex gap-1 text-slate-500 hover:text-indigo-400 transition-colors'>
-                                                        <p>Reset</p>
-                                                        <Undo2 size={16} className="" />
-                                                    </button>
+                                                    <div className="flex items-center gap-4">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                resetOverlayPosition();
+                                                            }}
+                                                            className='flex items-center gap-1 text-slate-500 hover:text-indigo-400 transition-colors text-xs'
+                                                        >
+                                                            <span>Reset</span>
+                                                            <Undo2 size={14} />
+                                                        </button>
 
-                                                    <div className="flex items-center gap-2">
-                                                        < div className="relative" >
+                                                        <label className="relative inline-flex items-center cursor-pointer">
                                                             <input
                                                                 type="checkbox"
-                                                                className="sr-only"
+                                                                className="sr-only peer"
                                                                 checked={config.isOverlayDraggable}
                                                                 onChange={(e) => updateConfig('isOverlayDraggable', e.target.checked)}
                                                             />
-                                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-700'}`}> </div>
-                                                            < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
-                                                        </div>
+                                                            <div className={`w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-700'}`}></div>
+                                                            <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}></div>
+                                                        </label>
                                                     </div>
-                                                </label>
-
-
+                                                </div>
                                             </div>
                                         </>
                                     )}
