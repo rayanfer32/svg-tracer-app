@@ -1,15 +1,12 @@
 # Vector Stroke Animator / SVG tracer app
 
-## Todos
-
-Add your new features and tasks below:
-
 ## Planned Features
 
-- [ ] Change load svg drop palceholder to load image/svg , which should take the user to the tracer tab and show the image there
+- [] Change load svg drop palceholder to load image/svg , which should take the user to the tracer tab and show the image there
+- [] resize svg using resize and move box around svg
 - Change the sidebar to use https://leva.pmnd.rs/
 
-## Bugs
+## Known Bugs
 
 - when applying to main svg , the progress slider is not updated
 - Switching back to tracer tab clears the loaded image
