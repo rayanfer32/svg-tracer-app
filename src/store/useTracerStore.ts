@@ -82,7 +82,10 @@ export const useTracerStore = create<TracerState>((set) => ({
     svgContent: DEFAULT_SVG,
     setSvgContent: (svg) => set((state) => ({
         svgContent: svg,
-        animationKey: state.animationKey + 1
+        animationKey: state.animationKey + 1,
+        currentTime: 0,
+        isPlaying: true,
+        isStopped: false
     })),
     overlayImage: null,
     setOverlayImage: (image) => set({ overlayImage: image }),
@@ -133,6 +136,9 @@ export const useTracerStore = create<TracerState>((set) => ({
     handleOnApplyTracedSvg: (newSvg) => set((state) => ({
         svgContent: newSvg,
         animationKey: state.animationKey + 1,
-        activeTab: 'animation'
+        activeTab: 'animation',
+        currentTime: 0,
+        isPlaying: true,
+        isStopped: false
     })),
 }));

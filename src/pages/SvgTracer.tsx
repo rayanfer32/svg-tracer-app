@@ -3,7 +3,6 @@ import { toCanvas } from 'html-to-image';
 import { Sidebar } from '../components/Sidebar';
 import { useTracerStore } from '../store/useTracerStore';
 import { easeFunctions } from '../utils/constants';
-import { CloudCog } from 'lucide-react';
 
 export default function SvgTracer() {
     const {
@@ -108,6 +107,102 @@ export default function SvgTracer() {
     };
 
 
+    const handleRecord = async () => {
+        if (!previewAreaRef.current || isRecording) return;
+
+        try {
+            isRecordingRef.current = true;
+            setIsRecording(true);
+            setIsPlaying(false);
+            setRecordingProgress(0);
+            (window as any).__stopRecording = false;
+
+            const totalDurationSec = totalDuration;
+            const fps = 30;
+            const totalFrames = Math.ceil(totalDurationSec * fps);
+
+            const element = previewAreaRef.current;
+            const captureCanvas = document.createElement('canvas');
+            const stream = captureCanvas.captureStream(fps);
+            const recorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9',
+                videoBitsPerSecond: 8000000
+            });
+
+            const chunks: Blob[] = [];
+            recorder.ondataavailable = (e) => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `svg-animation-${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                isRecordingRef.current = false;
+                setIsRecording(false);
+                setIsPlaying(true);
+            };
+
+            recorder.start();
+
+            const ease = (t: number) => {
+                const fn = easeFunctions[config.easing] || easeFunctions['linear'];
+                return fn ? fn(t) : t;
+            };
+
+            for (let frame = 0; frame <= totalFrames; frame++) {
+                if ((window as any).__stopRecording) break;
+                const frameTime = frame / fps;
+                setRecordingProgress(frame / totalFrames);
+
+                const currentElements = svgContainerRef.current?.querySelectorAll(
+                    'path, circle, rect, line, polyline, polygon, ellipse'
+                ) || [];
+
+                Array.from(currentElements).forEach((el, index) => {
+                    const geometryEl = el as unknown as SVGGeometryElement;
+                    const length = geometryEl.getTotalLength?.() || 0;
+                    if (length <= 0) return;
+
+                    const svgEl = el as SVGElement;
+                    const startTime = config.delay + (index * config.stagger);
+                    const elapsed = frameTime - startTime;
+                    const progress = Math.max(0, Math.min(elapsed / config.duration, 1));
+                    const easedProgress = ease(progress);
+                    const offset = (length * (1 - easedProgress)).toString();
+
+                    svgEl.style.transition = 'none';
+                    svgEl.style.animation = 'none';
+                    svgEl.style.strokeDasharray = length.toString();
+                    svgEl.setAttribute('stroke-dasharray', length.toString());
+                    svgEl.style.strokeDashoffset = offset;
+                    svgEl.setAttribute('stroke-dashoffset', offset);
+                });
+
+                await new Promise(r => requestAnimationFrame(r));
+
+                const frameCanvas = await toCanvas(element, {
+                    backgroundColor: config.backgroundColor,
+                    pixelRatio: 1,
+                });
+
+                captureCanvas.width = frameCanvas.width;
+                captureCanvas.height = frameCanvas.height;
+                const ctx = captureCanvas.getContext('2d');
+                if (ctx) ctx.drawImage(frameCanvas, 0, 0);
+            }
+
+            recorder.stop();
+        } catch (error) {
+            console.error('Recording failed:', error);
+            isRecordingRef.current = false;
+            setIsRecording(false);
+            setIsPlaying(true);
+            alert('Failed to record animation.');
+        }
+    };
+
     const stopRecording = () => {
         (window as any).__stopRecording = true;
     };
@@ -159,7 +254,6 @@ export default function SvgTracer() {
     // Effect for manual scrubbing / initial render
     useEffect(() => {
         if (!isPlaying || isStopped) {
-            console.log('rendering scrub frame@', currentTime);
             renderFrame(currentTime);
         }
     }, [currentTime, isPlaying, isStopped, renderFrame, animationKey]);
@@ -169,8 +263,10 @@ export default function SvgTracer() {
         let rafId: number;
         let lastTime = performance.now();
         let loopTime = currentTime;
+        let lastStoreUpdateTime = 0;
 
         const update = (now: number) => {
+            // Check ref for latest play state without restarting effect
             if (!loopStateRef.current.isPlaying || loopStateRef.current.isStopped) return;
 
             const delta = (now - lastTime) / 1000;
@@ -186,15 +282,26 @@ export default function SvgTracer() {
                 return;
             }
 
-            setCurrentTime(loopTime);
-            console.log('rendering frame@', loopTime);
+            // Render to DOM every frame for smoothness
             renderFrame(loopTime);
+
+            // Throttle store updates to reduce React re-renders during playback
+            // This prevents SvgTracer from re-rendering 60fps while playing
+            if (now - lastStoreUpdateTime > 400) {
+                lastStoreUpdateTime = now;
+                setCurrentTime(loopTime);
+            }
+
             rafId = requestAnimationFrame(update);
         };
 
         rafId = requestAnimationFrame(update);
-        return () => cancelAnimationFrame(rafId);
-    }, [isPlaying, isStopped, animationKey, currentTime, svgContent, config, renderFrame]);
+        return () => {
+            cancelAnimationFrame(rafId);
+            // Ensure store is final when stopping
+            setCurrentTime(loopTime);
+        };
+    }, [isPlaying, isStopped, animationKey, svgContent, config, renderFrame]);
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row font-sans" >
@@ -210,6 +317,8 @@ export default function SvgTracer() {
             `} </style>
 
             <Sidebar
+                handleRecord={handleRecord}
+                stopRecording={stopRecording}
                 vTracerCanvasRef={vTracerCanvasRef}
                 vTracerSvgRef={vTracerSvgRef}
             />

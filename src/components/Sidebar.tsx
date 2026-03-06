@@ -13,11 +13,15 @@ import { ImageTracer } from './ImageTracer';
 import { useTracerStore } from '../store/useTracerStore';
 
 interface SidebarProps {
+    handleRecord: () => Promise<void>;
+    stopRecording: () => void;
     vTracerCanvasRef: React.RefObject<HTMLCanvasElement | null>;
     vTracerSvgRef: React.RefObject<SVGSVGElement | null>;
 }
 
 export function Sidebar({
+    handleRecord,
+    stopRecording,
     vTracerCanvasRef,
     vTracerSvgRef
 }: SidebarProps) {
@@ -113,7 +117,7 @@ export function Sidebar({
     };
 
     const togglePlay = () => {
-        if (isStopped) {
+        if (isStopped || currentTime >= totalDuration - 0.01) {
             restartAnimation();
         } else {
             setIsPlaying(!isPlaying);
