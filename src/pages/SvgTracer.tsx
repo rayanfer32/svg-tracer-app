@@ -317,7 +317,7 @@ export default function SvgTracer() {
     }, [isPlaying, isStopped, animationKey, svgContent, config, renderFrame]);
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row font-sans" >
+        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row font-mono" >
             < style > {`
                 @keyframes svg-trace {
                     to { stroke-dashoffset: 0; }
