@@ -30,14 +30,14 @@ export function PlaybackControls({
                 </button>
                 <button
                     onClick={stopAnimation}
-                    className="flex items-center justify-center p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-[0.98] transition-all shadow-sm border border-slate-200"
+                    className="flex items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 active:scale-[0.98] transition-all shadow-sm border border-slate-700"
                     title="Finish Animation"
                 >
                     <SkipForward className="w-4 h-4" />
                 </button>
                 <button
                     onClick={restartAnimation}
-                    className="flex items-center justify-center p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-[0.98] transition-all shadow-sm border border-slate-200"
+                    className="flex items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 active:scale-[0.98] transition-all shadow-sm border border-slate-700"
                     title="Restart Animation"
                 >
                     <RotateCcw className="w-4 h-4" />

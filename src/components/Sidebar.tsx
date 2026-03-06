@@ -120,7 +120,7 @@ export function Sidebar({
         }
     };
     return (
-        <aside className="w-full md:w-80 bg-white border-r border-slate-200 p-4 flex flex-col gap-4 shadow-sm z-10 overflow-y-auto text-sm shrink-0" >
+        <aside className="w-full md:w-80 bg-slate-900 border-r border-slate-800 p-4 flex flex-col gap-4 shadow-xl z-10 overflow-y-auto text-sm shrink-0 text-slate-300" >
 
             <div className="flex flex-row flex-wrap gap-1">
                 <ToolkitLink href="https://mixboard.google.com/" label="Mixboard" />
@@ -132,16 +132,16 @@ export function Sidebar({
 
 
             {/* Tab Switcher */}
-            <div className="flex bg-slate-100 p-1 rounded-lg">
+            <div className="flex bg-slate-800 p-1 rounded-lg">
                 <button
                     onClick={() => setActiveTab('animation')}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'animation' ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'animation' ? 'bg-slate-700 shadow-sm text-indigo-400 border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                     Animation
                 </button>
                 <button
                     onClick={() => setActiveTab('tracer')}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'tracer' ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'tracer' ? 'bg-slate-700 shadow-sm text-indigo-400 border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                     Tracer
                 </button>
@@ -150,18 +150,18 @@ export function Sidebar({
             {activeTab === 'animation' ? (
                 <>
                     {/* Playback Controls */}
-                    <div className="border-b border-slate-100 pb-4 space-y-4">
+                    <div className="border-b border-slate-800 pb-4 space-y-4">
 
                         {/* Upload Section */}
-                        <div className="space-y-2 border-b border-slate-100 pb-4" >
+                        <div className="space-y-2 border-b border-slate-800 pb-4" >
                             <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
                                 <label
-                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors group"
+                                    className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-slate-800/50 transition-colors group"
                                     onDragOver={(e) => e.preventDefault()}
                                     onDrop={handleSvgDrop}
                                 >
-                                    <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
-                                    <span className="text-sm font-medium text-slate-600 group-hover:text-indigo-600" >
+                                    <Upload className="w-5 h-5 text-slate-500 group-hover:text-indigo-400" />
+                                    <span className="text-sm font-medium text-slate-400 group-hover:text-indigo-400" >
                                         Load SVG
                                     </span>
                                     < input
@@ -187,7 +187,7 @@ export function Sidebar({
                         />
 
                         <div className="space-y-1.5 px-1">
-                            <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                            <div className="flex justify-between text-[12px] font-medium text-slate-500 uppercase tracking-wider">
                                 <span>Progress</span>
                                 <span>{currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s</span>
                             </div>
@@ -202,7 +202,7 @@ export function Sidebar({
                                     setIsStopped(false);
                                     setCurrentTime(parseFloat(e.target.value));
                                 }}
-                                className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                             />
                         </div>
                     </div>
@@ -211,8 +211,8 @@ export function Sidebar({
 
                     {/* Configuration */}
                     <div className="space-y-3" >
-                        <div className="flex items-center gap-2 text-slate-800 font-semibold border-b border-slate-100 pb-1.5" >
-                            <Settings2 className="w-4 h-4" />
+                        <div className="flex items-center gap-2 text-slate-200 font-semibold border-b border-slate-800 pb-1.5" >
+                            <Settings2 className="w-4 h-4 text-indigo-400" />
                             Animation
                         </div>
 
@@ -280,7 +280,7 @@ export function Sidebar({
                                 <select
                                     value={config.easing}
                                     onChange={(e) => updateConfig('easing', e.target.value)}
-                                    className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    className="w-full text-sm p-1 bg-slate-800 border border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-300"
                                 >
                                     <option value="linear" > Linear </option>
                                     < option value="ease" > Ease </option>
@@ -295,7 +295,7 @@ export function Sidebar({
                                 < select
                                     value={config.direction}
                                     onChange={(e) => updateConfig('direction', e.target.value)}
-                                    className="w-full text-sm p-1 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    className="w-full text-sm p-1 bg-slate-800 border border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-300"
                                 >
                                     <option value="normal" > Normal </option>
                                     < option value="reverse" > Reverse </option>
@@ -305,9 +305,9 @@ export function Sidebar({
                             </div>
                         </div>
 
-                        < div className="pt-2 border-t border-slate-100 space-y-2.5" >
+                        < div className="pt-2 border-t border-slate-800 space-y-2.5" >
                             <label className="flex items-center justify-between cursor-pointer" >
-                                <span className="text-sm font-medium text-slate-700" > Force Outline Mode </span>
+                                <span className="text-sm font-medium text-slate-400" > Force Outline Mode </span>
                                 < div className="relative" >
                                     <input
                                         type="checkbox"
@@ -315,13 +315,13 @@ export function Sidebar({
                                         checked={config.forceOutline}
                                         onChange={(e) => updateConfig('forceOutline', e.target.checked)}
                                     />
-                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.forceOutline ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.forceOutline ? 'bg-indigo-500' : 'bg-slate-700'}`}> </div>
                                     < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.forceOutline ? 'transform translate-x-4' : ''}`}> </div>
                                 </div>
                             </label>
 
                             <label className="flex items-center justify-between cursor-pointer" >
-                                <span className="text-sm font-medium text-slate-700" > Use Original Fill Colors </span>
+                                <span className="text-sm font-medium text-slate-400" > Use Original Fill Colors </span>
                                 < div className="relative" >
                                     <input
                                         type="checkbox"
@@ -329,7 +329,7 @@ export function Sidebar({
                                         checked={config.useOriginalColor}
                                         onChange={(e) => updateConfig('useOriginalColor', e.target.checked)}
                                     />
-                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.useOriginalColor ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                    < div className={`block w-10 h-6 rounded-full transition-colors ${config.useOriginalColor ? 'bg-indigo-500' : 'bg-slate-700'}`}> </div>
                                     < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.useOriginalColor ? 'transform translate-x-4' : ''}`}> </div>
                                 </div>
                             </label>
@@ -343,17 +343,17 @@ export function Sidebar({
                                             value={config.strokeColor}
                                             onChange={(e) => updateConfig('strokeColor', e.target.value)
                                             }
-                                            className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
+                                            className="w-8 h-8 rounded border border-slate-700 bg-slate-800 cursor-pointer p-0.5"
                                         />
                                     </div>
                                 )}
 
-                            < div className="pt-2 border-t border-slate-100 space-y-2.5" >
+                            < div className="pt-2 border-t border-slate-800 space-y-2.5" >
 
 
 
                                 <label className="flex items-center justify-between cursor-pointer" >
-                                    <span className="text-sm font-medium text-slate-700" > Show Reference Image </span>
+                                    <span className="text-sm font-medium text-slate-400" > Show Reference Image </span>
                                     < div className="relative" >
                                         <input
                                             type="checkbox"
@@ -361,7 +361,7 @@ export function Sidebar({
                                             checked={config.showOverlay}
                                             onChange={(e) => updateConfig('showOverlay', e.target.checked)}
                                         />
-                                        < div className={`block w-10 h-6 rounded-full transition-colors ${config.showOverlay ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                        < div className={`block w-10 h-6 rounded-full transition-colors ${config.showOverlay ? 'bg-indigo-500' : 'bg-slate-700'}`}> </div>
                                         < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.showOverlay ? 'transform translate-x-4' : ''}`}> </div>
                                     </div>
                                 </label>
@@ -371,12 +371,12 @@ export function Sidebar({
                                         <>
 
                                             < label
-                                                className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
+                                                className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-emerald-500 hover:bg-slate-800/50 transition-colors group"
                                                 onDragOver={(e) => e.preventDefault()}
                                                 onDrop={handleImageDrop}
                                             >
-                                                <ImageIcon className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
-                                                <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-600" >
+                                                <ImageIcon className="w-4 h-4 text-slate-500 group-hover:text-emerald-400" />
+                                                <span className="text-xs font-medium text-slate-400 group-hover:text-emerald-400" >
                                                     Ref Image
                                                 </span>
                                                 < input
@@ -412,23 +412,22 @@ export function Sidebar({
 
                                             <div className="space-y-2 pt-1">
                                                 <label className="flex items-center justify-between cursor-pointer" >
-                                                    <span className="text-sm font-medium text-slate-700" > <Move size={16} />  </span>
-                                                    {/* <button
-                                                        
-                                                        className="w-full py-1.5 px-3 rounded-md bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors"
-                                                    >
-                                                    </button> */}
-                                                    <div className="flex items-center gap-2">
-                                                        <Undo2 onClick={resetOverlayPosition} size={16} />
-                                                        < div className="relative" >
+                                                    <span className="text-sm font-medium text-slate-400 flex  gap-2" > <Move size={16} /> Change Position  </span>
 
+                                                    <button onClick={resetOverlayPosition} className=' flex gap-1 text-slate-500 hover:text-indigo-400 transition-colors'>
+                                                        <p>Reset</p>
+                                                        <Undo2 size={16} className="" />
+                                                    </button>
+
+                                                    <div className="flex items-center gap-2">
+                                                        < div className="relative" >
                                                             <input
                                                                 type="checkbox"
                                                                 className="sr-only"
                                                                 checked={config.isOverlayDraggable}
                                                                 onChange={(e) => updateConfig('isOverlayDraggable', e.target.checked)}
                                                             />
-                                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-300'}`}> </div>
+                                                            < div className={`block w-10 h-6 rounded-full transition-colors ${config.isOverlayDraggable ? 'bg-indigo-500' : 'bg-slate-700'}`}> </div>
                                                             < div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${config.isOverlayDraggable ? 'transform translate-x-4' : ''}`}> </div>
                                                         </div>
                                                     </div>
@@ -441,9 +440,9 @@ export function Sidebar({
                             </div>
                         </div>
 
-                        <div className="flex gap-2 pt-2 border-t border-slate-100 space-y-2.5">
+                        <div className="flex flex-col gap-2 pt-2 border-t border-slate-800 space-y-2.5">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-slate-700">Background</span>
+                                <span className="text-sm font-medium text-slate-400">Background</span>
                                 <input
                                     type="color"
                                     value={config.backgroundColor.slice(0, 7)}
@@ -451,11 +450,11 @@ export function Sidebar({
                                         const hex = e.target.value;
                                         updateConfig('backgroundColor', hex + (config.backgroundColor.slice(7, 9) || 'cc'));
                                     }}
-                                    className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5"
+                                    className="w-8 h-8 rounded border border-slate-700 bg-slate-800 cursor-pointer p-0.5"
                                 />
                             </div>
                             <div className="space-y-1 w-full">
-                                <div className="flex justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                                <div className="flex justify-between text-[12px] font-medium text-slate-500 uppercase tracking-wider">
                                     <span>Opacity</span>
                                     <span>{Math.round((parseInt(config.backgroundColor.slice(7, 9) || 'cc', 16) / 255) * 100)}%</span>
                                 </div>
@@ -470,7 +469,7 @@ export function Sidebar({
                                         const color = config.backgroundColor.slice(0, 7);
                                         updateConfig('backgroundColor', color + opacity);
                                     }}
-                                    className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                    className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                                 />
                             </div>
                         </div>

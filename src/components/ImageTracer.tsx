@@ -38,7 +38,7 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
     const [isTracing, setIsTracing] = useState(false);
     const [traceProgress, setTraceProgress] = useState(0);
     const [tracedSvgContent, setTracedSvgContent] = useState<string | null>(null);
-    const [autoTrace, setAutoTrace] = useState(false);
+    const [autoTrace, setAutoTrace] = useState(true);
     const [autoApply, setAutoApply] = useState(false);
 
     const handleInternalImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,21 +184,21 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
     };
 
     return (
-        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="flex items-center gap-2 text-slate-800 font-semibold border-b border-slate-100 pb-1.5" >
-                <ImageIcon className="w-4 h-4 text-emerald-500" />
+        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300 text-slate-300">
+            <div className="flex items-center gap-2 text-slate-200 font-semibold border-b border-slate-800 pb-1.5" >
+                <ImageIcon className="w-4 h-4 text-emerald-400" />
                 Image Tracer
             </div>
 
             {/* Reference Image Preview/Upload */}
             {!sourceImage ? (
                 <label
-                    className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors group"
+                    className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-emerald-500 hover:bg-slate-800/50 transition-colors group"
                 >
-                    <ImageIcon className="w-6 h-6 text-slate-400 group-hover:text-emerald-500" />
+                    <ImageIcon className="w-6 h-6 text-slate-500 group-hover:text-emerald-400" />
                     <div className="text-center">
-                        <span className="block text-sm font-medium text-slate-600 group-hover:text-emerald-600">Select Reference Image</span>
-                        <span className="block text-[10px] text-slate-400">JPG, PNG, WebP</span>
+                        <span className="block text-sm font-medium text-slate-400 group-hover:text-emerald-400">Load Image</span>
+                        <span className="block text-[10px] text-slate-500">JPG, PNG, WebP</span>
                     </div>
                     <input
                         type="file"
@@ -208,10 +208,10 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     />
                 </label>
             ) : (
-                <div className="relative group rounded-lg overflow-hidden border border-slate-200 bg-slate-100/50 aspect-video flex items-center justify-center">
+                <div className="relative group rounded-lg overflow-hidden border border-slate-700 bg-slate-800/50 aspect-video flex items-center justify-center">
                     <img src={sourceImage} alt="Preview" className="max-w-full max-h-full object-contain" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <label className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-md text-slate-700 text-xs font-medium cursor-pointer shadow-sm hover:bg-slate-50">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 rounded-md text-slate-200 text-xs font-medium cursor-pointer shadow-sm hover:bg-slate-600">
                             <Upload className="w-3 h-3" />
                             Change Image
                             <input type="file" accept="image/*" className="hidden" onChange={handleInternalImageUpload} />
@@ -227,13 +227,13 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={() => handleVTracerConfigChange('clusteringMode', 'binary')}
-                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.clusteringMode === 'binary' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.clusteringMode === 'binary' ? 'bg-indigo-900/40 border-indigo-500/50 text-indigo-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
                         >
                             B/W
                         </button>
                         <button
                             onClick={() => handleVTracerConfigChange('clusteringMode', 'color')}
-                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.clusteringMode === 'color' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.clusteringMode === 'color' ? 'bg-indigo-900/40 border-indigo-500/50 text-indigo-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
                         >
                             Color
                         </button>
@@ -241,13 +241,13 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={() => handleVTracerConfigChange('hierarchical', 'cutout')}
-                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.hierarchical === 'cutout' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.hierarchical === 'cutout' ? 'bg-indigo-900/40 border-indigo-500/50 text-indigo-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
                         >
                             Cutout
                         </button>
                         <button
                             onClick={() => handleVTracerConfigChange('hierarchical', 'stacked')}
-                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.hierarchical === 'stacked' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                            className={`py-1.5 text-xs font-medium rounded-md border transition-all ${vTracerConfig.hierarchical === 'stacked' ? 'bg-indigo-900/40 border-indigo-500/50 text-indigo-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
                         >
                             Stacked
                         </button>
@@ -260,19 +260,19 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     <div className="grid grid-cols-3 gap-1">
                         <button
                             onClick={() => handleVTracerConfigChange('mode', 'none')}
-                            className={`py-1.5 text-[10px] font-medium rounded-md border transition-all ${vTracerConfig.mode === 'none' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                            className={`py-1.5 text-[10px] font-medium rounded-md border transition-all ${vTracerConfig.mode === 'none' ? 'bg-indigo-900/40 border-indigo-500/50 text-indigo-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
                         >
                             Pixel
                         </button>
                         <button
                             onClick={() => handleVTracerConfigChange('mode', 'polygon')}
-                            className={`py-1.5 text-[10px] font-medium rounded-md border transition-all ${vTracerConfig.mode === 'polygon' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                            className={`py-1.5 text-[10px] font-medium rounded-md border transition-all ${vTracerConfig.mode === 'polygon' ? 'bg-indigo-900/40 border-indigo-500/50 text-indigo-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
                         >
                             Polygon
                         </button>
                         <button
                             onClick={() => handleVTracerConfigChange('mode', 'spline')}
-                            className={`py-1.5 text-[10px] font-medium rounded-md border transition-all ${vTracerConfig.mode === 'spline' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                            className={`py-1.5 text-[10px] font-medium rounded-md border transition-all ${vTracerConfig.mode === 'spline' ? 'bg-indigo-900/40 border-indigo-500/50 text-indigo-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
                         >
                             Spline
                         </button>
@@ -360,12 +360,12 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     />
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 space-y-3">
-                    <div className="flex flex-col gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <div className="pt-4 border-t border-slate-800 space-y-3">
+                    <div className="flex flex-col gap-2 bg-slate-800/50 p-2 rounded-lg border border-slate-700">
                         <label className="flex items-center justify-between cursor-pointer group">
                             <div className="flex items-center gap-2">
-                                <Sparkles className={`w-3.5 h-3.5 ${autoTrace ? 'text-indigo-500' : 'text-slate-400'}`} />
-                                <span className="text-xs font-medium text-slate-700">Auto Trace Change</span>
+                                <Sparkles className={`w-3.5 h-3.5 ${autoTrace ? 'text-indigo-400' : 'text-slate-500'}`} />
+                                <span className="text-xs font-medium text-slate-400">Auto Trace Change</span>
                             </div>
                             <div className="relative">
                                 <input
@@ -374,15 +374,15 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                                     checked={autoTrace}
                                     onChange={(e) => setAutoTrace(e.target.checked)}
                                 />
-                                <div className={`block w-8 h-4.5 rounded-full transition-colors ${autoTrace ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
+                                <div className={`block w-8 h-4.5 rounded-full transition-colors ${autoTrace ? 'bg-indigo-500' : 'bg-slate-700'}`}></div>
                                 <div className={`absolute left-0.75 top-0.75 bg-white w-3 h-3 rounded-full transition-transform ${autoTrace ? 'transform translate-x-3.5' : ''}`}></div>
                             </div>
                         </label>
 
                         <label className="flex items-center justify-between cursor-pointer group">
                             <div className="flex items-center gap-2">
-                                <Upload className={`w-3.5 h-3.5 ${autoApply ? 'text-emerald-500' : 'text-slate-400'}`} />
-                                <span className="text-xs font-medium text-slate-700">Auto Apply to Main</span>
+                                <Upload className={`w-3.5 h-3.5 ${autoApply ? 'text-emerald-400' : 'text-slate-500'}`} />
+                                <span className="text-xs font-medium text-slate-400">Auto Apply to Main</span>
                             </div>
                             <div className="relative">
                                 <input
@@ -391,7 +391,7 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                                     checked={autoApply}
                                     onChange={(e) => setAutoApply(e.target.checked)}
                                 />
-                                <div className={`block w-8 h-4.5 rounded-full transition-colors ${autoApply ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                                <div className={`block w-8 h-4.5 rounded-full transition-colors ${autoApply ? 'bg-emerald-500' : 'bg-slate-700'}`}></div>
                                 <div className={`absolute left-0.75 top-0.75 bg-white w-3 h-3 rounded-full transition-transform ${autoApply ? 'transform translate-x-3.5' : ''}`}></div>
                             </div>
                         </label>
@@ -400,7 +400,7 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     <button
                         onClick={handleTrace}
                         disabled={isTracing || !sourceImage}
-                        className={`w-full py-2 px-4 rounded-lg font-bold text-white shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 ${isTracing ? 'bg-slate-400 cursor-not-allowed' : 'bg-linear-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-indigo-200'}`}
+                        className={`w-full py-2 px-4 rounded-lg font-bold text-white shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 ${isTracing ? 'bg-slate-400 cursor-not-allowed' : 'bg-linear-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-zinc-800'}`}
                     >
                         {isTracing ? (
                             <>
@@ -418,7 +418,7 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     {tracedSvgContent && (
                         <button
                             onClick={applyTracedSvg}
-                            className="w-full py-2 px-4 rounded-lg font-bold text-white bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-200 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full py-2 px-4 rounded-lg font-bold text-white bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700  transition-all transform active:scale-95 flex items-center justify-center gap-2"
                         >
                             <Upload className="w-4 h-4" />
                             Apply to Main SVG
