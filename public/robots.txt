@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://svg-tracer.example.com/sitemap.xml

@@ -2,6 +2,7 @@
 
 ## Planned Features
 
+- [x] Add SEO optimizations for github and google search result highlighting
 - [] Change load svg drop palceholder to load image/svg , which should take the user to the tracer tab and show the image there
 - [] resize svg using resize and move box around svg
 - Change the sidebar to use https://leva.pmnd.rs/

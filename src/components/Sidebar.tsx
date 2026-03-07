@@ -128,6 +128,8 @@ export function Sidebar({
                 <ToolkitLink href="https://editor.graphite.art/" label="Graphite" />
                 <ToolkitLink href="https://in.pinterest.com/search/pins/?q=creative%20logo&rs=typed" label="Pinterest" />
                 <ToolkitLink href="https://docs.google.com/document/d/1xnezyU3p-TQlPdfR1kUeJykmh0OPkIlanVkQCjbpPgk" label="Notes" />
+                <ToolkitLink href="https://svgco.de/" label="Svgco.de" />
+                <ToolkitLink href="https://svgomg.net/" label="SVGOMG" />
             </div>
 
 

@@ -1,6 +1,16 @@
 {
-  "name": "bun-react-template",
-  "version": "0.1.0",
+  "name": "svg-tracer-app",
+  "version": "1.0.0",
+  "description": "Powerful browser-based tool to trace images to SVG and create line-drawing animations.",
+  "keywords": [
+    "svg",
+    "tracer",
+    "animation",
+    "vector",
+    "vtracer",
+    "react",
+    "bun"
+  ],
   "private": true,
   "type": "module",
   "scripts": {

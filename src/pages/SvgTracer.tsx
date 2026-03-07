@@ -337,6 +337,7 @@ export default function SvgTracer() {
             />
 
             <main ref={previewAreaRef} className="flex flex-col h-screen md:h-auto md:flex-1 bg-slate-200 relative" >
+                <h1 className="sr-only">SVG Tracer & Animator - Convert Images to Vector Art Online</h1>
                 < div
                     className="absolute inset-0 opacity-40 pointer-events-none"
                     style={{
