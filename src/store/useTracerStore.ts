@@ -77,15 +77,15 @@ interface TracerState {
 }
 
 const initialConfig: TracerConfig = {
-    duration: 1.8,
-    stagger: 2,
-    delay: 2,
+    duration: 0.5,
+    stagger: 0.6,
+    delay: 0.5,
     easing: 'linear',
     direction: 'normal',
     forceOutline: true,
     useOriginalColor: true,
     strokeColor: '#3b82f6',
-    strokeWidth: 0.5,
+    strokeWidth: 1,
     showOverlay: true,
     overlayOpacity: 0.3,
     isOverlayDraggable: false,
@@ -213,7 +213,6 @@ export const useTracerStore = create<TracerState>()(subscribeWithSelector((set) 
     handleOnApplyTracedSvg: (newSvg) => set((state) => ({
         svgContent: newSvg,
         animationKey: state.animationKey + 1,
-        // activeTab: 'animation',
         currentTime: 0,
         isPlaying: true,
         isStopped: false
