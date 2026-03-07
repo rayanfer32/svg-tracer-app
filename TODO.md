@@ -10,6 +10,7 @@
 
 ## Completed
 
+- [x] add a button to download the traced svg
 - [x] resize svg using resize and move box around svg
 - [x] Change load svg drop placeholder to load image/svg , which should take the user to the tracer tab and show the image there
 - [x] when applying to main svg , the progress slider is not updated

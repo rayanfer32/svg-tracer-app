@@ -1,8 +1,9 @@
-import { ImageIcon, Upload, Sparkles, Palette, Copy, Square, Ruler, Scissors, CircleDot } from 'lucide-react';
+import { ImageIcon, Upload, Sparkles, Palette, Copy, Square, Ruler, Scissors, CircleDot, Download } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { NumberInput } from '../components/NumberInput';
 import { useTracerStore } from '../store/useTracerStore';
 import type { VTracerConfig } from '../types';
+import { handleDownloadSvg } from '@/lib/helpers';
 
 interface ImageTracerProps {
     onApplySvg: (svgContent: string) => void;
@@ -152,6 +153,8 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
             setTracedSvgContent(null);
         }
     };
+
+
 
     return (
         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300 text-slate-300">
@@ -386,13 +389,23 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
                     </button>
 
                     {tracedSvgContent && (
-                        <button
-                            onClick={applyTracedSvg}
-                            className="w-full py-2 px-4 rounded-lg font-bold text-white bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700  transition-all transform active:scale-95 flex items-center justify-center gap-2"
-                        >
-                            <Upload className="w-4 h-4" />
-                            Apply to Main SVG
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={applyTracedSvg}
+                                className="flex-1 py-2 px-4 rounded-lg font-bold text-white bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700  transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <Upload className="w-4 h-4" />
+                                Apply
+                            </button>
+                            <button
+                                onClick={() => handleDownloadSvg(tracedSvgContent)}
+                                className="py-2 px-4 rounded-lg font-bold text-white bg-slate-700 hover:bg-slate-600 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                                title="Download Traced SVG"
+                            >
+                                <Download className="w-4 h-4" />
+                                SVG
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

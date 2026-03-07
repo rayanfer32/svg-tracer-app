@@ -3,12 +3,14 @@ import {
     Image as ImageIcon, MousePointerClick, Wrench,
     Timer, Layers, Watch, PenTool, Maximize, Contrast,
     Undo2,
-    Move
+    Move,
+    Download
 } from 'lucide-react';
 import React from 'react';
 import { NumberInput } from './NumberInput';
 import { PlaybackControls } from './PlaybackControls';
 import { useTracerStore } from '../store/useTracerStore';
+import { handleDownloadSvg } from '@/lib/helpers';
 
 export function AnimationControls() {
     const {
@@ -19,6 +21,7 @@ export function AnimationControls() {
         restartAnimation,
         currentTime, setCurrentTime,
         totalDuration,
+        svgContent,
         setSvgContent,
         setOverlayImage,
         setTracerSourceImage,
@@ -142,7 +145,7 @@ export function AnimationControls() {
                 <div className="space-y-2 border-b border-slate-800 pb-4" >
                     <div className='flex gap-2' onDragOver={(e) => e.preventDefault()}>
                         <label
-                            className="flex items-center justify-center gap-1.5 w-full p-2 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-slate-800/50 transition-colors group"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-slate-800/50 transition-colors group"
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={handleSvgDrop}
                         >
@@ -157,8 +160,13 @@ export function AnimationControls() {
                                 onChange={handleFileUpload}
                             />
                         </label>
-
-
+                        <button
+                            onClick={() => handleDownloadSvg(svgContent)}
+                            className="flex items-center justify-center px-3 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 active:scale-[0.98] transition-all shadow-sm border border-slate-700 group"
+                            title="Download Current SVG"
+                        >
+                            <Download className="w-5 h-5 group-hover:text-indigo-400" />
+                        </button>
                     </div>
 
 
