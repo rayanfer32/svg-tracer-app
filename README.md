@@ -5,7 +5,7 @@
 
 **SVG Tracer & Animator** is a powerful, browser-based tool designed to convert raster images (JPEG, PNG, etc.) into high-quality SVG vector art. Beyond simple tracing, it allows you to create and export stunning line-drawing animations.
 
-![SVG Tracer Preview](./public/og-image.png)
+![SVG Tracer Preview](./public/image.png)
 
 ## Live demo
 
