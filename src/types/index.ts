@@ -23,3 +23,24 @@ export interface TracerConfig {
     limitOverlayOpacity: number;
     limitOverlayScale: number;
 }
+
+export interface VTracerConfig {
+    mode: 'none' | 'polygon' | 'spline';
+    clusteringMode: 'binary' | 'color';
+    hierarchical: 'cutout' | 'stacked';
+    cornerThreshold: number;
+    lengthThreshold: number;
+    spliceThreshold: number;
+    filterSpeckle: number;
+    colorPrecision: number;
+    layerDifference: number;
+    pathPrecision: number;
+    // Slider Limits
+    limitFilterSpeckle: number;
+    limitColorPrecision: number;
+    limitLayerDifference: number;
+    limitCornerThreshold: number;
+    limitLengthThreshold: number;
+    limitSpliceThreshold: number;
+    limitPathPrecision: number;
+}

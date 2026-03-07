@@ -1,27 +1,8 @@
 import { ImageIcon, Upload, Sparkles, Palette, Copy, Square, Ruler, Scissors, CircleDot } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
 import { NumberInput } from './NumberInput';
-
-interface VTracerConfig {
-    mode: 'none' | 'polygon' | 'spline';
-    clusteringMode: 'binary' | 'color';
-    hierarchical: 'cutout' | 'stacked';
-    cornerThreshold: number;
-    lengthThreshold: number;
-    spliceThreshold: number;
-    filterSpeckle: number;
-    colorPrecision: number;
-    layerDifference: number;
-    pathPrecision: number;
-    // Slider Limits
-    limitFilterSpeckle: number;
-    limitColorPrecision: number;
-    limitLayerDifference: number;
-    limitCornerThreshold: number;
-    limitLengthThreshold: number;
-    limitSpliceThreshold: number;
-    limitPathPrecision: number;
-}
+import { useTracerStore } from '../store/useTracerStore';
+import type { VTracerConfig } from '../types';
 
 interface ImageTracerProps {
     onApplySvg: (svgContent: string) => void;
@@ -34,12 +15,21 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
     vTracerCanvasRef,
     vTracerSvgRef
 }) => {
-    const [sourceImage, setSourceImage] = useState<string | null>(null);
+    const {
+        tracerSourceImage: sourceImage,
+        setTracerSourceImage: setSourceImage,
+        vTracerConfig,
+        updateVTracerConfig,
+        autoTrace,
+        setAutoTrace,
+        autoApply,
+        setAutoApply,
+        tracedSvgContent,
+        setTracedSvgContent
+    } = useTracerStore();
+
     const [isTracing, setIsTracing] = useState(false);
     const [traceProgress, setTraceProgress] = useState(0);
-    const [tracedSvgContent, setTracedSvgContent] = useState<string | null>(null);
-    const [autoTrace, setAutoTrace] = useState(true);
-    const [autoApply, setAutoApply] = useState(false);
 
     const handleInternalImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -55,28 +45,8 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
         }
     };
 
-    const [vTracerConfig, setVTracerConfig] = useState<VTracerConfig>({
-        mode: 'spline',
-        clusteringMode: 'color',
-        hierarchical: 'stacked',
-        cornerThreshold: 60,
-        lengthThreshold: 4,
-        spliceThreshold: 45,
-        filterSpeckle: 4,
-        colorPrecision: 6,
-        layerDifference: 16,
-        pathPrecision: 8,
-        limitFilterSpeckle: 16,
-        limitColorPrecision: 8,
-        limitLayerDifference: 255,
-        limitCornerThreshold: 180,
-        limitLengthThreshold: 10,
-        limitSpliceThreshold: 180,
-        limitPathPrecision: 16,
-    });
-
     const handleVTracerConfigChange = <T extends keyof VTracerConfig>(key: T, value: VTracerConfig[T]) => {
-        setVTracerConfig(prev => ({ ...prev, [key]: value }));
+        updateVTracerConfig(key, value);
     };
 
     const handleTrace = async () => {
@@ -430,3 +400,4 @@ export const ImageTracer: React.FC<ImageTracerProps> = ({
         </div>
     );
 };
+

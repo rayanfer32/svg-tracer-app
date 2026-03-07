@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import type { TracerConfig } from '../types';
+import type { TracerConfig, VTracerConfig } from '../types';
 import { DEFAULT_SVG } from '../utils/constants';
 
 interface TracerState {
@@ -20,6 +20,18 @@ interface TracerState {
     config: TracerConfig;
     setConfig: (config: TracerConfig) => void;
     updateConfig: <T extends keyof TracerConfig>(key: T, value: TracerConfig[T]) => void;
+
+    // VTracer State
+    vTracerConfig: VTracerConfig;
+    updateVTracerConfig: <T extends keyof VTracerConfig>(key: T, value: VTracerConfig[T]) => void;
+    autoTrace: boolean;
+    setAutoTrace: (auto: boolean) => void;
+    autoApply: boolean;
+    setAutoApply: (auto: boolean) => void;
+    tracedSvgContent: string | null;
+    setTracedSvgContent: (svg: string | null) => void;
+    tracerSourceImage: string | null;
+    setTracerSourceImage: (image: string | null) => void;
 
     // Playback State
     isPlaying: boolean;
@@ -74,6 +86,26 @@ const initialConfig: TracerConfig = {
     limitOverlayScale: 3
 };
 
+const initialVTracerConfig: VTracerConfig = {
+    mode: 'spline',
+    clusteringMode: 'color',
+    hierarchical: 'stacked',
+    cornerThreshold: 60,
+    lengthThreshold: 4,
+    spliceThreshold: 45,
+    filterSpeckle: 4,
+    colorPrecision: 6,
+    layerDifference: 16,
+    pathPrecision: 8,
+    limitFilterSpeckle: 16,
+    limitColorPrecision: 8,
+    limitLayerDifference: 255,
+    limitCornerThreshold: 180,
+    limitLengthThreshold: 10,
+    limitSpliceThreshold: 180,
+    limitPathPrecision: 16,
+};
+
 export const useTracerStore = create<TracerState>()(subscribeWithSelector((set) => ({
     // UI State
     activeTab: 'animation',
@@ -108,6 +140,20 @@ export const useTracerStore = create<TracerState>()(subscribeWithSelector((set) 
         isStopped: false,
         // currentTime: 0
     })),
+
+    // VTracer State
+    vTracerConfig: initialVTracerConfig,
+    updateVTracerConfig: (key, value) => set((state) => ({
+        vTracerConfig: { ...state.vTracerConfig, [key]: value }
+    })),
+    autoTrace: true,
+    setAutoTrace: (auto) => set({ autoTrace: auto }),
+    autoApply: false,
+    setAutoApply: (auto) => set({ autoApply: auto }),
+    tracedSvgContent: null,
+    setTracedSvgContent: (svg) => set({ tracedSvgContent: svg }),
+    tracerSourceImage: null,
+    setTracerSourceImage: (image) => set({ tracerSourceImage: image }),
 
     // Playback State
     isPlaying: true,

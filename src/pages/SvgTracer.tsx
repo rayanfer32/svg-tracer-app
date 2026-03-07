@@ -61,12 +61,14 @@ export default function SvgTracer() {
 
     // Update total duration when SVG or timing config changes
     useEffect(() => {
-        const elements = svgContainerRef.current?.querySelectorAll(
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgContent, 'image/svg+xml');
+        const elements = doc.querySelectorAll(
             'path, circle, rect, line, polyline, polygon, ellipse'
-        ) || [];
+        );
         const duration = config.delay + (elements.length * config.stagger) + config.duration;
         setTotalDuration(duration);
-    }, [svgContent, config.delay, config.stagger, config.duration]);
+    }, [svgContent, config.delay, config.stagger, config.duration, setTotalDuration]);
 
     const getEventPoint = (e: React.MouseEvent | React.TouchEvent) => {
         if ('touches' in e) {
