@@ -35,13 +35,16 @@ export function Sidebar({
         totalDuration,
         setSvgContent,
         setOverlayImage,
+        setTracerSourceImage,
         setOverlayPos,
         handleOnApplyTracedSvg
     } = useTracerStore();
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file && file.type === 'image/svg+xml') {
+        if (!file) return;
+
+        if (file.type === 'image/svg+xml') {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const content = e.target?.result;
@@ -50,8 +53,18 @@ export function Sidebar({
                 }
             };
             reader.readAsText(file);
+        } else if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target?.result;
+                if (typeof content === 'string') {
+                    setTracerSourceImage(content);
+                    setActiveTab('tracer');
+                }
+            };
+            reader.readAsDataURL(file);
         } else {
-            alert("Please upload a valid SVG file.");
+            alert("Please upload a valid SVG or image file.");
         }
     };
 
@@ -72,7 +85,9 @@ export function Sidebar({
     const handleSvgDrop = (e: React.DragEvent) => {
         e.preventDefault();
         const file = e.dataTransfer.files?.[0];
-        if (file && file.type === 'image/svg+xml') {
+        if (!file) return;
+
+        if (file.type === 'image/svg+xml') {
             const reader = new FileReader();
             reader.onload = (ev) => {
                 const content = ev.target?.result;
@@ -81,6 +96,16 @@ export function Sidebar({
                 }
             };
             reader.readAsText(file);
+        } else if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const content = ev.target?.result;
+                if (typeof content === 'string') {
+                    setTracerSourceImage(content);
+                    setActiveTab('tracer');
+                }
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -164,11 +189,11 @@ export function Sidebar({
                                 >
                                     <Upload className="w-5 h-5 text-slate-500 group-hover:text-indigo-400" />
                                     <span className="text-sm font-medium text-slate-400 group-hover:text-indigo-400" >
-                                        Load SVG
+                                        Load Image/SVG
                                     </span>
                                     < input
                                         type="file"
-                                        accept=".svg"
+                                        accept=".svg,image/*"
                                         className="hidden"
                                         onChange={handleFileUpload}
                                     />
