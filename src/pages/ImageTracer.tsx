@@ -1,6 +1,6 @@
 import { ImageIcon, Upload, Sparkles, Palette, Copy, Square, Ruler, Scissors, CircleDot } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
-import { NumberInput } from './NumberInput';
+import React, { useState, useEffect } from 'react';
+import { NumberInput } from '../components/NumberInput';
 import { useTracerStore } from '../store/useTracerStore';
 import type { VTracerConfig } from '../types';
 

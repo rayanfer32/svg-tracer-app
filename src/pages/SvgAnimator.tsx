@@ -374,8 +374,6 @@ export default function SvgTracer() {
             `} </style>
 
             <Sidebar
-                handleRecord={handleRecord}
-                stopRecording={stopRecording}
                 vTracerCanvasRef={vTracerCanvasRef}
                 vTracerSvgRef={vTracerSvgRef}
             />
@@ -468,7 +466,6 @@ export default function SvgTracer() {
                                     ref={vTracerSvgRef}
                                     xmlns="http://www.w3.org/2000/svg"
                                     style={{ display: 'block' }}
-                                    // viewBox='0 0 1024 1024'
                                     className=""
                                 />
 

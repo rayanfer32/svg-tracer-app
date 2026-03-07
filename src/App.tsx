@@ -1,5 +1,5 @@
 import "./index.css";
-import SvgTracer from "./pages/SvgTracer";
+import SvgTracer from "./pages/SvgAnimator";
 
 export function App() {
   return (
