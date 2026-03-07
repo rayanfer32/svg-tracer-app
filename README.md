@@ -7,6 +7,10 @@
 
 ![SVG Tracer Preview](./public/og-image.png)
 
+## Live demo
+
+- https://svg-tracer-app.vercel.app
+
 ## 🚀 Features
 
 - **Advanced Image Tracing**: Convert any raster image to clean SVG paths using the integrated VTracer engine.
@@ -50,15 +54,6 @@ bun run build.ts
 bun start
 ```
 
-## 📈 SEO & Optimization
-
-This repository includes:
-
-- Comprehensive Meta Tags for Search Engines.
-- Open Graph and Twitter Card support for social sharing.
-- Automated Sitemap and Robots.txt generation.
-- Optimized performance for fast browser-side tracing.
-
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
@@ -66,3 +61,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 Built with ❤️ by [rayanfer32](https://github.com/rayanfer32)
+
+## Credits
+
+- Google antigravity (All the complex to trace the svg code)
+- This project was possible using (give it a star) https://github.com/visioncortex/vtracer/
