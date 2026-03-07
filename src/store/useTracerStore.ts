@@ -58,6 +58,21 @@ interface TracerState {
     setDragStart: (pos: { x: number; y: number }) => void;
     resizeStart: { x: number; y: number; scale: number };
     setResizeStart: (start: { x: number; y: number; scale: number }) => void;
+
+    // SVG Workspace Transformation
+    svgPos: { x: number; y: number };
+    setSvgPos: (pos: { x: number; y: number }) => void;
+    isEditingMode: boolean;
+    setIsEditingMode: (mode: boolean) => void;
+    isSvgDragging: boolean;
+    setIsSvgDragging: (dragging: boolean) => void;
+    isSvgResizing: boolean;
+    setIsSvgResizing: (resizing: boolean) => void;
+    svgDragStart: { x: number; y: number };
+    setSvgDragStart: (pos: { x: number; y: number }) => void;
+    svgResizeStart: { x: number; y: number; scale: number };
+    setSvgResizeStart: (start: { x: number; y: number; scale: number }) => void;
+
     handleOnApplyTracedSvg: (newSvg: string) => void;
 }
 
@@ -180,6 +195,21 @@ export const useTracerStore = create<TracerState>()(subscribeWithSelector((set) 
     setDragStart: (pos) => set({ dragStart: pos }),
     resizeStart: { x: 0, y: 0, scale: 1 },
     setResizeStart: (start) => set({ resizeStart: start }),
+
+    // SVG Workspace Transformation
+    svgPos: { x: 0, y: 0 },
+    setSvgPos: (pos) => set({ svgPos: pos }),
+    isEditingMode: false,
+    setIsEditingMode: (mode) => set({ isEditingMode: mode }),
+    isSvgDragging: false,
+    setIsSvgDragging: (dragging) => set({ isSvgDragging: dragging }),
+    isSvgResizing: false,
+    setIsSvgResizing: (resizing) => set({ isSvgResizing: resizing }),
+    svgDragStart: { x: 0, y: 0 },
+    setSvgDragStart: (pos) => set({ svgDragStart: pos }),
+    svgResizeStart: { x: 0, y: 0, scale: 1 },
+    setSvgResizeStart: (start) => set({ svgResizeStart: start }),
+
     handleOnApplyTracedSvg: (newSvg) => set((state) => ({
         svgContent: newSvg,
         animationKey: state.animationKey + 1,

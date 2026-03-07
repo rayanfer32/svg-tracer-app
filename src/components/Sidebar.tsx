@@ -37,7 +37,9 @@ export function Sidebar({
         setOverlayImage,
         setTracerSourceImage,
         setOverlayPos,
-        handleOnApplyTracedSvg
+        handleOnApplyTracedSvg,
+        svgPos, setSvgPos,
+        isEditingMode, setIsEditingMode
     } = useTracerStore();
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,6 +237,42 @@ export function Sidebar({
                     </div>
 
 
+
+                    {/* Workspace Transform */}
+                    <div className="space-y-3 pb-4 border-b border-slate-800">
+                        <div className="flex items-center justify-between">
+
+
+                            <span className="flex gap-2 text-sm font-medium text-slate-400 group-hover:text-slate-300">
+                                <Move size={16} />
+                                Position Svg</span>
+
+                            <button
+                                onClick={() => {
+                                    setSvgPos({ x: 0, y: 0 });
+                                    updateConfig('svgScale', 1);
+                                }}
+                                className="text-[10px] text-slate-500 hover:text-indigo-400 flex items-center gap-1 transition-colors"
+                            >
+                                <Undo2 className="w-3 h-3" />
+                                Reset
+                            </button>
+                            <label className="flex items-center justify-between cursor-pointer gap-2">
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={isEditingMode}
+                                        onChange={(e) => setIsEditingMode(e.target.checked)}
+                                    />
+                                    <div className={`block w-10 h-6 rounded-full transition-colors ${isEditingMode ? 'bg-indigo-500' : 'bg-slate-700'}`}></div>
+                                    <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isEditingMode ? 'transform translate-x-4' : ''}`}></div>
+                                </div>
+                            </label>
+                        </div>
+
+
+                    </div>
 
                     {/* Configuration */}
                     <div className="space-y-3" >
@@ -440,7 +478,7 @@ export function Sidebar({
                                             <div className="space-y-2 pt-1">
                                                 <div className="flex items-center justify-between" >
                                                     <span className="text-sm font-medium text-slate-400 flex items-center gap-2" >
-                                                        <Move size={16} /> Change Position
+                                                        <Move size={16} /> Position Ref image
                                                     </span>
 
                                                     <div className="flex items-center gap-4">

@@ -2,7 +2,6 @@
 
 ## Planned Features
 
-- [] resize svg using resize and move box around svg
 - [] Change the sidebar to use https://leva.pmnd.rs/
 
 ## Known Bugs
@@ -11,6 +10,7 @@
 
 ## Completed
 
+- [x] resize svg using resize and move box around svg
 - [x] Change load svg drop placeholder to load image/svg , which should take the user to the tracer tab and show the image there
 - [x] when applying to main svg , the progress slider is not updated
 - [x] Switching back to tracer tab clears the loaded image

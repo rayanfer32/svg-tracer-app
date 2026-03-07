@@ -33,6 +33,19 @@ export default function SvgTracer() {
     const config = useTracerStore(s => s.config);
     const updateConfig = useTracerStore(s => s.updateConfig);
 
+    const isEditingMode = useTracerStore(s => s.isEditingMode);
+    const setIsEditingMode = useTracerStore(s => s.setIsEditingMode);
+    const svgPos = useTracerStore(s => s.svgPos);
+    const setSvgPos = useTracerStore(s => s.setSvgPos);
+    const isSvgDragging = useTracerStore(s => s.isSvgDragging);
+    const setIsSvgDragging = useTracerStore(s => s.setIsSvgDragging);
+    const isSvgResizing = useTracerStore(s => s.isSvgResizing);
+    const setIsSvgResizing = useTracerStore(s => s.setIsSvgResizing);
+    const svgDragStart = useTracerStore(s => s.svgDragStart);
+    const setSvgDragStart = useTracerStore(s => s.setSvgDragStart);
+    const svgResizeStart = useTracerStore(s => s.svgResizeStart);
+    const setSvgResizeStart = useTracerStore(s => s.setSvgResizeStart);
+
     const isRecordingRef = useRef<boolean>(false);
     const svgContainerRef = useRef<HTMLDivElement>(null);
     const previewAreaRef = useRef<HTMLDivElement>(null);
@@ -96,8 +109,9 @@ export default function SvgTracer() {
     };
 
     const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!isDragging && !isResizing) return;
+        if (!isDragging && !isResizing && !isSvgDragging && !isSvgResizing) return;
         const p = getEventPoint(e);
+
         if (isDragging) {
             setOverlayPos({
                 x: p.x - dragStart.x,
@@ -107,12 +121,38 @@ export default function SvgTracer() {
             const dx = p.x - resizeStart.x;
             const newScale = Math.max(0.1, resizeStart.scale + dx * 0.005);
             updateConfig('overlayScale', newScale);
+        } else if (isSvgDragging) {
+            setSvgPos({
+                x: p.x - svgDragStart.x,
+                y: p.y - svgDragStart.y
+            });
+        } else if (isSvgResizing) {
+            const dx = p.x - svgResizeStart.x;
+            const newScale = Math.max(0.1, svgResizeStart.scale + dx * 0.005);
+            updateConfig('svgScale', newScale);
         }
     };
 
     const handleEnd = () => {
         setIsDragging(false);
         setIsResizing(false);
+        setIsSvgDragging(false);
+        setIsSvgResizing(false);
+    };
+
+    const handleSvgDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isEditingMode) return;
+        setIsSvgDragging(true);
+        const p = getEventPoint(e);
+        setSvgDragStart({ x: p.x - svgPos.x, y: p.y - svgPos.y });
+    };
+
+    const handleSvgResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
+        e.stopPropagation();
+        if (!isEditingMode) return;
+        setIsSvgResizing(true);
+        const p = getEventPoint(e);
+        setSvgResizeStart({ x: p.x, y: p.y, scale: config.svgScale });
     };
 
 
@@ -397,10 +437,27 @@ export default function SvgTracer() {
                             < div
                                 key={animationKey}
                                 ref={svgContainerRef}
-                                className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''} ${config.isOverlayDraggable ? 'pointer-events-none' : ''}`}
-                                style={{ transform: `scale(${config.svgScale})` }}
-                                dangerouslySetInnerHTML={{ __html: svgContent }}
-                            />
+                                onMouseDown={handleSvgDragStart}
+                                onTouchStart={handleSvgDragStart}
+                                className={`w-full h-full flex items-center justify-center z-10 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full ${config.forceOutline ? 'force-outline' : ''} ${config.isOverlayDraggable || isEditingMode ? 'pointer-events-none' : ''} ${isEditingMode ? 'cursor-move ring-2 ring-indigo-500/50 rounded-sm' : ''}`}
+                                style={{ transform: `scale(${config.svgScale}) translate(${svgPos.x}px, ${svgPos.y}px)` }}
+                            >
+                                <div className={`w-full h-full flex items-center justify-center relative ${isEditingMode ? 'pointer-events-none' : ''}`} dangerouslySetInnerHTML={{ __html: svgContent }} />
+                                {isEditingMode && (
+                                    <div
+                                        className="absolute inset-0 pointer-events-auto cursor-move group"
+                                        onMouseDown={handleSvgDragStart}
+                                        onTouchStart={handleSvgDragStart}
+                                    >
+                                        <div
+                                            className="absolute -bottom-1 -right-1 w-3 h-3 bg-white border-2 border-indigo-500 rounded-full cursor-se-resize shadow-md hover:scale-125 transition-transform"
+                                            onMouseDown={handleSvgResizeStart}
+                                            onTouchStart={handleSvgResizeStart}
+                                            title="Drag to resize workspace"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         ) : (
                             <div id="vtracer-container" className="">
                                 <canvas id="vtracer-canvas-internal" ref={vTracerCanvasRef} />
